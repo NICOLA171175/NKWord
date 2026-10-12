@@ -102,7 +102,7 @@ describe('DocumentView con impaginazione', () => {
             paragraphId: a.id, start: 0, end: 5, x: 50, y: 50, width: 500, height: 14, baseline: 11,
             runs: [{ kind: 'text', paragraphId: a.id, start: 0, end: 5, text: 'Ciao ', format: { bold: true }, x: 0, width: 30 }],
           }],
-          decorations: [],
+          decorations: [{ kind: 'border', rect: { x: 50, y: 49.75, width: 500, height: 0.5 }, color: '#ff0000', width: 0.5 }],
           header: [],
           footer: [],
         })),
@@ -123,6 +123,10 @@ describe('DocumentView con impaginazione', () => {
     expect(pages[0]!.style.width).toBe('800px'); // 600 pt
     expect(pages[0]!.querySelector('.run')!.textContent).toBe('Ciao ');
     expect(pages[1]!.querySelector('.caret')).not.toBeNull();
+    const border = pages[0]!.querySelector<HTMLElement>('.decoration-border')!;
+    expect(border.style.background).toContain('#ff0000');
+    expect(border.style.border).toBe('');
+    expect(parseFloat(border.style.height)).toBeCloseTo(0.667, 2);
 
     pages[1]!.querySelector('.run')!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, clientX: 0, clientY: 0 }));
     expect(hits[0]![0]).toBe(1);

@@ -165,8 +165,8 @@ export class DocumentView {
         const box = document.createElement('div');
         box.className = `decoration decoration-${d.kind}`;
         Object.assign(box.style, { left: px(d.rect.x), top: px(d.rect.y), width: px(d.rect.width), height: px(d.rect.height) });
-        if (d.kind === 'fill') box.style.background = d.color;
-        else box.style.border = `${px(d.width ?? 0.5)} solid ${d.color}`;
+        // Per i bordi il rettangolo è già il tratto (spesso quanto il bordo): si riempie come un fondo.
+        box.style.background = d.color;
         el.append(box);
       }
       const area = (cls: string, lines: readonly LineBox[]) => {
