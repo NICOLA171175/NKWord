@@ -1,0 +1,373 @@
+:root {
+  --accent: #2b579a;
+  --accent-dark: #1e3f73;
+  --ribbon-bg: #f3f3f3;
+  --ribbon-border: #d6d6d6;
+  --canvas: #e6e6e6;
+  --text: #252525;
+  --muted: #605e5c;
+  --hover: #e1e1e1;
+  --pressed: #c8d7ee;
+  --selection: rgba(51, 120, 214, 0.3);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  height: 100%;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--canvas);
+}
+
+.title-bar {
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 12px;
+  text-align: center;
+}
+
+/* Barra multifunzione ---------------------------------------------------- */
+
+.ribbon {
+  background: var(--ribbon-bg);
+  border-bottom: 1px solid var(--ribbon-border);
+}
+
+.ribbon-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--accent);
+  padding: 0 8px;
+  overflow-x: auto;
+}
+
+.ribbon-tab {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ribbon-tab:hover {
+  background: var(--accent-dark);
+}
+
+.ribbon-tab[aria-selected='true'] {
+  background: var(--ribbon-bg);
+  color: var(--accent);
+}
+
+.ribbon-panel {
+  display: flex;
+  align-items: stretch;
+  min-height: 92px;
+  padding: 4px 4px 0;
+  overflow-x: auto;
+}
+
+.ribbon-group {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--ribbon-border);
+  padding: 0 6px;
+}
+
+.ribbon-group-body {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 2px;
+  max-width: 340px;
+}
+
+.ribbon-group-title {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  padding: 2px 0 4px;
+  white-space: nowrap;
+}
+
+.ribbon-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 6px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.ribbon-button:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.ribbon-button[aria-pressed='true'] {
+  background: var(--pressed);
+  border-color: #9fb7dd;
+}
+
+.ribbon-button:disabled,
+.ribbon-select:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ribbon-icon {
+  min-width: 16px;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Le voci del gruppo Carattere con icona breve mostrano solo l'icona. */
+.ribbon-group-body .ribbon-button[data-command^='format.'] .ribbon-label {
+  display: none;
+}
+
+.ribbon-select {
+  font: inherit;
+  font-size: 12px;
+  height: 24px;
+  max-width: 150px;
+}
+
+.hf-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 12px;
+  background: #fff4ce;
+  border-bottom: 1px solid #e0c97b;
+  font-size: 12px;
+}
+
+.hf-bar[hidden] {
+  display: none;
+}
+
+/* Documento -------------------------------------------------------------- */
+
+.doc-scroll {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+}
+
+.doc-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  cursor: text;
+}
+
+.page {
+  position: relative;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  flex: none;
+}
+
+.page-flow .page-header-area,
+.page-flow .page-footer-area {
+  position: absolute;
+  min-height: 1em;
+}
+
+.page-laid-out .page-area,
+.page-laid-out .line,
+.page-laid-out .run,
+.decoration,
+.selection-rect {
+  position: absolute;
+}
+
+.page-laid-out .page-area {
+  inset: 0;
+}
+
+.page-laid-out .run {
+  white-space: pre;
+  top: 0;
+}
+
+.selection-rect {
+  background: var(--selection);
+  pointer-events: none;
+}
+
+/* Modifica di intestazione e piè di pagina: corpo attenuato. */
+.doc-pages[data-header-footer='header'] .page-body-area,
+.doc-pages[data-header-footer='footer'] .page-body-area,
+.doc-pages[data-header-footer=''] .page-header-area,
+.doc-pages[data-header-footer=''] .page-footer-area {
+  opacity: 0.45;
+}
+
+.doc-pages[data-header-footer='header'] .page-header-area,
+.doc-pages[data-header-footer='footer'] .page-footer-area {
+  outline: 1px dashed var(--accent);
+  outline-offset: 2px;
+}
+
+.para {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  min-height: 1em;
+}
+
+.run-text.selected,
+.run-tab.selected,
+.para-mark.selected,
+.run-image.selected {
+  background-color: var(--selection) !important;
+}
+
+.run-link {
+  color: #0563c1;
+  text-decoration: underline;
+}
+
+.run-field {
+  background: #e8e8e8;
+}
+
+.para-mark {
+  color: var(--accent);
+}
+
+.show-marks .run-break,
+.show-marks .run-tab {
+  color: var(--accent);
+}
+
+.doc-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.doc-table td {
+  border: 1px solid #a6a6a6;
+  padding: 2px 6px;
+  vertical-align: top;
+}
+
+.caret {
+  position: absolute;
+  width: 1px;
+  background: #000;
+  pointer-events: none;
+  animation: caret-blink 1.06s steps(1) infinite;
+}
+
+.caret-inline {
+  position: relative;
+  display: inline-block;
+  height: 1.15em;
+  margin-right: -1px;
+  vertical-align: text-bottom;
+}
+
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Riceve tastiera e IME; segue il cursore ma è invisibile. */
+.input-sink {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  white-space: pre;
+  z-index: 1;
+}
+
+/* Durante la composizione IME l'anteprima resta visibile sul cursore. */
+.input-sink.composing {
+  width: auto;
+  min-width: 4em;
+  color: var(--text);
+  background: #fff;
+  text-decoration: underline dotted;
+}
+
+/* Barra di stato --------------------------------------------------------- */
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  padding: 3px 12px;
+}
+
+.status-spacer {
+  flex: 1;
+}
+
+.status-zoom {
+  width: 120px;
+}
+
+@media print {
+  .title-bar,
+  .ribbon,
+  .hf-bar,
+  .status-bar,
+  .caret,
+  .input-sink {
+    display: none !important;
+  }
+
+  .app,
+  .doc-pages {
+    background: none;
+    padding: 0;
+  }
+
+  .doc-scroll {
+    overflow: visible;
+  }
+
+  .page {
+    box-shadow: none;
+    break-after: page;
+  }
+}
