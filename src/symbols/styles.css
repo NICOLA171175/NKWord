@@ -1,0 +1,128 @@
+.symbols-panel {
+  position: absolute;
+  z-index: 50;
+  width: 420px;
+  max-width: calc(100vw - 16px);
+  max-height: 80vh;
+  overflow: auto;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #c8c6c4;
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  color: #242424;
+  font-size: 13px;
+  padding: 8px 12px 12px;
+}
+.symbols-panel button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.symbols-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.symbols-close {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  color: #616161;
+  border-radius: 4px;
+}
+.symbols-close:hover {
+  background: #f0f0f0;
+}
+.symbols-title {
+  color: #616161;
+  margin: 4px 0;
+}
+.symbols-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 6px;
+  color: #616161;
+}
+.symbols-select {
+  flex: 1;
+  font: inherit;
+  padding: 3px 4px;
+}
+.symbols-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  border-top: 1px solid #e1dfdd;
+  border-left: 1px solid #e1dfdd;
+}
+.symbols-main {
+  max-height: 200px;
+  overflow-y: auto;
+}
+.symbols-cell {
+  height: 36px;
+  min-width: 0;
+  background: #fff;
+  border: none;
+  border-right: 1px solid #e1dfdd;
+  border-bottom: 1px solid #e1dfdd;
+  font-family: 'Segoe UI Symbol', 'Segoe UI', 'Noto Sans Symbols', 'DejaVu Sans', sans-serif !important;
+  font-size: 18px !important;
+  padding: 0;
+}
+.symbols-cell:hover,
+.symbols-cell:focus-visible {
+  background: #cfe4fa;
+  outline: none;
+}
+.symbols-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.symbols-preview {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #c8c6c4;
+  font-size: 28px;
+}
+.symbols-info {
+  flex: 1;
+  min-width: 0;
+}
+.symbols-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.symbols-code {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: #616161;
+}
+.symbols-code-input {
+  width: 80px;
+  font: inherit;
+  padding: 2px 4px;
+}
+.symbols-insert {
+  background: #2b579a;
+  color: #fff !important;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 14px;
+}
+.symbols-insert:disabled {
+  background: #a6a6a6;
+  cursor: default;
+}
