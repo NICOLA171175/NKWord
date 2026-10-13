@@ -16,6 +16,8 @@ export interface EditorEvents extends Record<string, unknown> {
   change: { readonly state: EditorState; readonly previous: EditorState; readonly meta: TransactionMeta };
   /** Solo quando cambia il documento (non la sola selezione). */
   docChange: { readonly state: EditorState; readonly previous: EditorState };
+  /** Un comando è stato eseguito senza errori (anche se non ha cambiato lo stato, es. `file.export`). */
+  executed: { readonly commandId: string; readonly args: unknown };
   /** Un comando è fallito con un'eccezione. */
   error: { readonly commandId: string; readonly error: unknown };
 }
@@ -132,9 +134,9 @@ export class Editor {
     if (!this.canExecute(id, args)) return false;
     try {
       const tr = cmd.run(this.context(), args);
-      if (!tr) return false;
-      this.apply(tr);
-      return true;
+      if (tr) this.apply(tr);
+      this.events.emit('executed', { commandId: id, args });
+      return !!tr;
     } catch (error) {
       this.events.emit('error', { commandId: id, error });
       return false;
@@ -148,9 +150,9 @@ export class Editor {
     if (!this.canExecute(id, args)) return false;
     try {
       const tr = await cmd.run(this.context(), args);
-      if (!tr) return false;
-      this.apply(tr);
-      return true;
+      if (tr) this.apply(tr);
+      this.events.emit('executed', { commandId: id, args });
+      return !!tr;
     } catch (error) {
       this.events.emit('error', { commandId: id, error });
       return false;
