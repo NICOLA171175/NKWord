@@ -200,7 +200,12 @@ export function clearFormatting(state: EditorState): Transaction {
     const from = p.id === start.paragraphId ? start.offset : 0;
     const to = p.id === end.paragraphId ? end.offset : paragraphLength(p);
     let next = mapFormatInRange(p, from, to, (format) => ({
-      format: { ...(format.link ? { link: format.link } : {}), ...(format.commentIds ? { commentIds: format.commentIds } : {}) },
+      format: {
+        ...(format.link ? { link: format.link } : {}),
+        ...(format.commentIds ? { commentIds: format.commentIds } : {}),
+        ...(format.indexEntry ? { indexEntry: format.indexEntry } : {}),
+        ...(format.crossRef ? { crossRef: format.crossRef } : {}),
+      },
     }));
     const { styleId: _s, markFormat: _m, ...rest } = next;
     next = { ...rest, format: p.format.list ? { list: p.format.list } : {} };

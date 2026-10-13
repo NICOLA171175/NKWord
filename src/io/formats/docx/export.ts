@@ -270,7 +270,7 @@ class DocxWriter {
   inlineXml(inline: Inline, rels: Rels): string {
     switch (inline.type) {
       case 'text': {
-        const { link: _link, ...format } = inline.format;
+        const { link: _link, indexEntry: _entry, crossRef: _ref, ...format } = inline.format;
         const t = inline.revision?.kind === 'delete' ? 'w:delText' : 'w:t';
         return `<w:r>${charFormatXml(format, inline.styleId)}<${t} xml:space="preserve">${escapeText(inline.text)}</${t}></w:r>`;
       }
@@ -323,7 +323,7 @@ class DocxWriter {
     const ends = this.comments?.ends.get(p.id);
     // Run con gli eventuali inizi/fine di commento attorno.
     const runXml = (index: number) =>
-      commentRangeStartXml(starts?.get(index)) + this.revisedInlineXml(children[index]!, rels) + commentRangeEndXml(ends?.get(index));
+      commentRangeStartXml(starts?.get(index)) + this.revisedInlineXml(children[index]!, rels) + indexEntryXml(children, index) + commentRangeEndXml(ends?.get(index));
     while (i < children.length) {
       const c = children[i]!;
       const link = c.type === 'text' ? c.format.link : undefined;
@@ -607,6 +607,16 @@ class DocxWriter {
 }
 
 const emptyParagraph: Paragraph = { type: 'paragraph', id: '', format: {}, children: [] };
+
+/** Campo XE di Word dopo l'ultimo run di un testo segnato come voce d'indice (vedi src/references). */
+function indexEntryXml(children: readonly Inline[], index: number): string {
+  const c = children[index]!;
+  const entry = c.type === 'text' ? c.format.indexEntry : undefined;
+  const next = children[index + 1];
+  if (!entry || (next?.type === 'text' && next.format.indexEntry === entry)) return '';
+  const instr = ` XE "${entry.replace(/"/g, '""')}" `;
+  return `<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve">${escapeText(instr)}</w:instrText></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>`;
+}
 
 function namespaces(): string {
   return `xmlns:w="${NS.w}" xmlns:r="${NS.r}" xmlns:wp="${NS.wp}" xmlns:a="${NS.a}" xmlns:pic="${NS.pic}" xmlns:wps="${WPS_NS}"`;

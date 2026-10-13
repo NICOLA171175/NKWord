@@ -43,6 +43,16 @@ export interface CharFormat {
    * separati da spazio (una stringa, così i run uguali si fondono).
    */
   readonly commentIds?: string;
+  /**
+   * Voce dell'indice analitico segnata su questo testo (come il campo XE di
+   * Word): "voce" oppure "voce:sottovoce". Non si vede nel documento.
+   */
+  readonly indexEntry?: string;
+  /**
+   * Riferimento incrociato: il testo è generato e aggiornato da
+   * `src/references` ("<cosa mostra>:<tipo di destinazione>:<id>").
+   */
+  readonly crossRef?: string;
 }
 
 export type Alignment = 'left' | 'center' | 'right' | 'justify';

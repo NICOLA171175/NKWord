@@ -1,0 +1,110 @@
+/* Finestre di Riferimenti: didascalia, riferimento incrociato, segna voce. */
+
+.refs-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.refs-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 16px 20px;
+  background: #fff;
+  color: var(--text, #242424);
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  font: 13px 'Segoe UI', system-ui, sans-serif;
+}
+
+.refs-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.refs-intro,
+.refs-empty {
+  margin: 0 0 10px;
+  color: var(--muted, #616161);
+}
+
+.refs-empty {
+  margin: 6px 0 0;
+  padding: 10px;
+  border: 1px dashed #c8c8c8;
+  border-radius: 4px;
+}
+
+.refs-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.refs-field {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.refs-field input,
+.refs-field select,
+.refs-list {
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid #c8c8c8;
+  border-radius: 4px;
+  font: inherit;
+}
+
+.refs-preview {
+  padding: 4px 6px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fafafa;
+  font-style: italic;
+  color: #44546a;
+}
+
+.refs-label {
+  margin-top: 4px;
+}
+
+.refs-list {
+  width: 100%;
+}
+
+.refs-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.refs-buttons button {
+  min-width: 80px;
+  padding: 5px 12px;
+  border: 1px solid #c8c8c8;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.refs-buttons button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.refs-buttons .refs-primary {
+  border-color: #2b579a;
+  background: #2b579a;
+  color: #fff;
+}

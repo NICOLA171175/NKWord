@@ -511,6 +511,21 @@ function parseInstr(instr: string): { kind?: FieldKind; link?: string } {
   return {};
 }
 
+/**
+ * Campo XE (voce di indice analitico) di Word: la voce va sull'ultima parola
+ * scritta prima del campo, come `indexEntry` (vedi src/references).
+ */
+function markIndexEntry(out: Inline[], instr: string): void {
+  const m = /^\s*XE\s+"((?:[^"]|"")*)"/i.exec(instr);
+  const entry = m?.[1]?.replace(/""/g, '"').trim();
+  const last = out[out.length - 1];
+  if (!entry || last?.type !== 'text') return;
+  const cut = last.text.trimEnd().search(/\S+$/);
+  const head = last.text.slice(0, Math.max(0, cut));
+  const marked: Inline = { ...last, text: last.text.slice(head.length), format: { ...last.format, indexEntry: entry } };
+  out.splice(out.length - 1, 1, ...(head ? [{ ...last, text: head }, marked] : [marked]));
+}
+
 interface ComplexField {
   instr: string;
   phase: 'instr' | 'result';
@@ -760,6 +775,7 @@ class Reader {
             if (f && f.phase === 'instr') {
               Object.assign(f, parseInstr(f.instr));
               if (f.kind && !this.suppressed) out.push({ type: 'field', kind: f.kind, format: f.format });
+              else if (!this.suppressed) markIndexEntry(out, f.instr);
             }
           }
           break;
