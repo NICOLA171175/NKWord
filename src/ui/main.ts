@@ -7,11 +7,9 @@ import { createApp } from './shell';
 import './styles.css';
 
 // I moduli degli altri thread vengono caricati se esistono; quelli mancanti
-// lasciano semplicemente i loro pulsanti disabilitati.
-const found = import.meta.glob<Record<string, unknown>>(
-  ['../layout/index.ts', '../io/index.ts', '../editing/index.ts', '../structures/index.ts'],
-  { eager: true },
-);
+// lasciano semplicemente i loro pulsanti disabilitati. Ogni cartella di
+// src con un index.ts è un modulo: aggiungerne uno non richiede di toccare qui.
+const found = import.meta.glob<Record<string, unknown>>(['../*/index.ts', '!../core/index.ts', '!../ui/index.ts'], { eager: true });
 
 const editor = new Editor();
 for (const module of collectModules(Object.values(found), [UI_MODULE_ID])) editor.use(module);

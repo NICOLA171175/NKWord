@@ -57,6 +57,7 @@ export const RIBBON_ITEMS: readonly UiRibbonItem[] = [
   item('file', 'Esporta', 'file.export', 'Word (.docx)', { icon: '⤓', args: { formatId: 'docx' } }),
   item('file', 'Esporta', 'file.export', 'HTML', { icon: '⤓', args: { formatId: 'html' } }),
   item('file', 'Esporta', 'file.export', 'Testo', { icon: '⤓', args: { formatId: 'txt' } }),
+  item('file', 'Esporta', 'file.export', 'PDF', { icon: '⤓', args: { formatId: 'pdf' } }),
   item('file', 'Stampa', 'view.print', 'Stampa', { icon: '🖶' }),
 
   // Home ----------------------------------------------------------------
