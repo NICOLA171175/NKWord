@@ -8,6 +8,7 @@ import {
   ptToEmu,
   ptToHalfPoints,
   ptToTwips,
+  footnoteNumbers,
   type Block,
   type BorderLine,
   type Borders,
@@ -15,6 +16,7 @@ import {
   type DocumentModel,
   type FieldKind,
   type HeaderFooter,
+  type Id,
   type Inline,
   type ParaFormat,
   type Paragraph,
@@ -128,6 +130,10 @@ class DocxWriter {
   private headerCount = 0;
   private footerCount = 0;
   private usesEvenHeaders = false;
+  /** Id DOCX delle note a piè di pagina (da 1; -1 e 0 sono i separatori). */
+  private readonly footnoteIds: ReadonlyMap<Id, number>;
+  /** Nota che si sta scrivendo in footnotes.xml. */
+  private currentNote: Id | undefined;
   private revisionId = 0;
   private readonly anchors: ReadonlySet<string>;
   private bookmarkId = 0;
@@ -139,6 +145,7 @@ class DocxWriter {
     this.anchors = internalAnchors(doc);
     let n = 1;
     for (const id of Object.keys(doc.lists)) this.numIds.set(id, n++);
+    this.footnoteIds = footnoteNumbers(doc);
   }
 
   private addFile(path: string, content: string | Uint8Array, contentType?: string): void {
@@ -242,6 +249,12 @@ class DocxWriter {
         return inline.kind === 'line' ? '<w:r><w:br/></w:r>' : `<w:r><w:br w:type="${inline.kind}"/></w:r>`;
       case 'field':
         return this.fieldXml(inline.kind, inline.format);
+      case 'footnoteRef': {
+        const rPr = charFormatXml({ ...inline.format, verticalAlign: 'superscript' });
+        if (inline.noteId === this.currentNote) return `<w:r>${rPr}<w:footnoteRef/></w:r>`;
+        const id = this.footnoteIds.get(inline.noteId);
+        return id === undefined ? '' : `<w:r>${rPr}<w:footnoteReference w:id="${id}"/></w:r>`;
+      }
       case 'image': {
         const target = this.imageTarget(inline.src, rels);
         if (!target) return '';
@@ -421,6 +434,27 @@ class DocxWriter {
   }
 
   // -------------------------------------------------------------------------
+  // Note a piè di pagina
+
+  footnotesXml(rels: Rels): string {
+    const separator = (type: string, id: number, mark: string) =>
+      `<w:footnote w:type="${type}" w:id="${id}"><w:p><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:${mark}/></w:r></w:p></w:footnote>`;
+    const notes = [...this.footnoteIds].map(([noteId, id]) => {
+      const blocks = this.doc.footnotes?.[noteId]?.blocks ?? [];
+      this.currentNote = noteId;
+      const body = this.blocksXml(blocks.length && blocks[blocks.length - 1]!.type === 'paragraph' ? blocks : [...blocks, emptyParagraph], rels);
+      this.currentNote = undefined;
+      return `<w:footnote w:id="${id}">${body}</w:footnote>`;
+    });
+    return (
+      `${XML_DECL}<w:footnotes ${namespaces()}>` +
+      separator('separator', -1, 'separator') +
+      separator('continuationSeparator', 0, 'continuationSeparator') +
+      `${notes.join('')}</w:footnotes>`
+    );
+  }
+
+  // -------------------------------------------------------------------------
   // Stili, numerazione, proprietà
 
   styleXml(style: Style, isDefault: boolean): string {
@@ -492,7 +526,9 @@ class DocxWriter {
     return (
       `${XML_DECL}<w:settings xmlns:w="${NS.w}">` +
       (this.usesEvenHeaders ? '<w:evenAndOddHeaders/>' : '') +
-      `<w:defaultTabStop w:val="708"/><w:compat><w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/></w:compat>` +
+      `<w:defaultTabStop w:val="708"/>` +
+      (this.footnoteIds.size ? '<w:footnotePr><w:footnote w:id="-1"/><w:footnote w:id="0"/></w:footnotePr>' : '') +
+      `<w:compat><w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/></w:compat>` +
       `</w:settings>`
     );
   }
@@ -511,6 +547,12 @@ class DocxWriter {
     // document.xml per primo: genera media, intestazioni e piè di pagina.
     const document = this.documentXml(rels);
     this.addFile('word/document.xml', document, CONTENT_TYPES.document);
+    if (this.footnoteIds.size) {
+      const noteRels = new Rels();
+      this.addFile('word/footnotes.xml', this.footnotesXml(noteRels), CONTENT_TYPES.footnotes);
+      if (noteRels.size) this.addFile('word/_rels/footnotes.xml.rels', noteRels.xml());
+      rels.add(REL.footnotes, 'footnotes.xml');
+    }
     this.addFile('word/_rels/document.xml.rels', rels.xml());
     this.addFile('word/styles.xml', this.stylesXml(), CONTENT_TYPES.styles);
     this.addFile('word/settings.xml', this.settingsXml(), CONTENT_TYPES.settings);

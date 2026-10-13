@@ -5,6 +5,7 @@
  */
 
 import {
+  footnoteNumbers,
   ptToPx,
   resolveCharFormat,
   resolveParaFormat,
@@ -63,7 +64,11 @@ function wrapTags(content: string, f: CharFormat): string {
 }
 
 class HtmlWriter {
-  constructor(private readonly doc: DocumentModel) {}
+  private readonly footnoteNumbers: ReadonlyMap<string, number>;
+
+  constructor(private readonly doc: DocumentModel) {
+    this.footnoteNumbers = footnoteNumbers(doc);
+  }
 
   inline(inline: Inline): string {
     switch (inline.type) {
@@ -75,6 +80,8 @@ class HtmlWriter {
         return inline.kind === 'line' ? '<br>' : '<br style="page-break-before:always">';
       case 'field':
         return wrapTags(`<span data-field="${inline.kind}"></span>`, inline.format);
+      case 'footnoteRef':
+        return wrapTags(escapeText(String(this.footnoteNumbers.get(inline.noteId) ?? '')), { ...inline.format, verticalAlign: 'superscript' });
       case 'image': {
         const src = this.doc.media[inline.src] ?? inline.src;
         const w = Math.round(ptToPx(inline.width));
@@ -245,12 +252,20 @@ class HtmlWriter {
   }
 
   body(): string {
-    return this.doc.sections
+    const sections = this.doc.sections
       .map((s, i) => {
         const brk = i > 0 && s.breakType !== 'continuous' ? ' style="page-break-before:always"' : '';
         return `<div class="section"${brk}>\n${this.blocks(s.blocks)}\n</div>`;
       })
       .join('\n');
+    return sections + this.footnotes();
+  }
+
+  /** Le note a piè di pagina, in HTML, vanno in fondo al documento. */
+  footnotes(): string {
+    const notes = [...this.footnoteNumbers.keys()].map((id) => this.doc.footnotes?.[id]);
+    const html = notes.map((n) => (n ? `<div class="footnote">\n${this.blocks(n.blocks)}\n</div>` : '')).join('\n');
+    return html ? `\n<div class="footnotes">\n<hr>\n${html}\n</div>` : '';
   }
 }
 

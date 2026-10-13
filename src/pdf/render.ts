@@ -193,7 +193,7 @@ export async function layoutToPdf(layout: DocumentLayout, options: PdfRenderOpti
       const color = rgb(d.color, undefined);
       if (color) canvas.fillRect(d.rect.x, d.rect.y, d.rect.width, d.rect.height, color);
     }
-    for (const lines of [page.header, page.lines, page.footer]) for (const l of lines) canvas.line(l);
+    for (const lines of [page.header, page.lines, page.footnotes ?? [], page.footer]) for (const l of lines) canvas.line(l);
     contents.push({ id: writer.addStream('', canvas.ops.join('\n')), canvas });
     pageIds.push(writer.alloc());
   }

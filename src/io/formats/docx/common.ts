@@ -23,6 +23,7 @@ export const REL = {
   header: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/header',
   footer: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer',
   theme: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme',
+  footnotes: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/footnotes',
 } as const;
 
 export const CONTENT_TYPES = {
@@ -32,6 +33,7 @@ export const CONTENT_TYPES = {
   settings: 'application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml',
   header: 'application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml',
   footer: 'application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml',
+  footnotes: 'application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml',
   core: 'application/vnd.openxmlformats-package.core-properties+xml',
   rels: 'application/vnd.openxmlformats-package.relationships+xml',
 } as const;
@@ -89,4 +91,5 @@ export const BUILTIN_STYLE_NAMES: Record<string, string> = {
   Title: 'Title',
   Subtitle: 'Subtitle',
   Hyperlink: 'Hyperlink',
+  FootnoteText: 'footnote text',
 };

@@ -293,6 +293,21 @@ export function updateParagraph(doc: DocumentModel, p: Paragraph): DocumentModel
   return replaceBlock(doc, p.id, [p]);
 }
 
+/**
+ * Numero di ogni nota a piè di pagina (1, 2, 3...) nell'ordine in cui i
+ * richiami compaiono nel corpo. Le note senza richiamo non hanno numero.
+ */
+export function footnoteNumbers(doc: DocumentModel): Map<Id, number> {
+  const numbers = new Map<Id, number>();
+  if (!doc.footnotes) return numbers;
+  for (const { paragraph: p } of paragraphs(doc)) {
+    for (const c of p.children) {
+      if (c.type === 'footnoteRef' && doc.footnotes[c.noteId] && !numbers.has(c.noteId)) numbers.set(c.noteId, numbers.size + 1);
+    }
+  }
+  return numbers;
+}
+
 // ---------------------------------------------------------------------------
 // Posizioni
 

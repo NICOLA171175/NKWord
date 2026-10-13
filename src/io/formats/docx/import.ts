@@ -23,6 +23,7 @@ import {
   type DocumentMetadata,
   type DocumentModel,
   type FieldKind,
+  type Footnote,
   type HeaderFooter,
   type Id,
   type Inline,
@@ -531,6 +532,12 @@ class Reader {
   /** Revisione del contenitore `w:ins`/`w:del` che si sta leggendo. */
   private revision: Revision | undefined;
   readonly media: Record<string, string> = {};
+  readonly footnotes: Record<Id, Footnote> = {};
+  /** Note di footnotes.xml per id DOCX, lette quando il corpo le richiama. */
+  private readonly noteSources = new Map<string, MarkupElement>();
+  private readonly noteIds = new Map<string, Id>();
+  private notePart: Part | undefined;
+  private currentNote: Id | undefined;
   /** Commenti aperti (`w:commentRangeStart` senza ancora la fine), come id del modello. */
   private readonly openComments: Id[] = [];
 
@@ -541,6 +548,37 @@ class Reader {
     private readonly listIds: ReadonlyMap<string, Id>,
     private readonly commentAnchors: ReadonlyMap<string, Id> = new Map(),
   ) {}
+
+  /** Registra la parte footnotes.xml (le note di tipo separatore si ignorano). */
+  setFootnotes(root: MarkupElement | undefined, part: Part): void {
+    if (!root) return;
+    this.notePart = part;
+    for (const n of elements(root, 'w:footnote')) {
+      const type = attr(n, 'w:type');
+      const id = attr(n, 'w:id');
+      if (id !== undefined && (!type || type === 'normal')) this.noteSources.set(id, n);
+    }
+  }
+
+  /** Legge (una volta sola) la nota con l'id DOCX dato; restituisce l'id nel modello. */
+  private footnote(docxId: string | undefined): Id | undefined {
+    if (docxId === undefined) return undefined;
+    const known = this.noteIds.get(docxId);
+    if (known) return known;
+    const source = this.noteSources.get(docxId);
+    if (!source || !this.notePart) return undefined;
+    const id = newId();
+    this.noteIds.set(docxId, id);
+    // Il contenuto della nota non deve risentire dei campi aperti nel corpo.
+    const fields = this.fields.splice(0);
+    const outer = this.currentNote;
+    this.currentNote = id;
+    const blocks = this.blocks(source.children, this.notePart);
+    this.currentNote = outer;
+    this.fields.push(...fields);
+    this.footnotes[id] = { id, blocks: blocks.length ? blocks : [emptyParagraph()] };
+    return id;
+  }
 
   /** Gestisce inizio/fine di un commento; restituisce false se l'elemento non lo è. */
   private commentMark(el: MarkupElement): boolean {
@@ -700,6 +738,14 @@ class Reader {
               if (f.kind && !this.suppressed) out.push({ type: 'field', kind: f.kind, format: f.format });
             }
           }
+          break;
+        }
+        case 'w:footnoteReference':
+        case 'w:footnoteRef': {
+          const noteId = c.name === 'w:footnoteRef' ? this.currentNote : this.footnote(attr(c, 'w:id'));
+          // Apice e collegamento sono impliciti nel richiamo.
+          const { link: _link, verticalAlign: _va, ...refFormat } = format;
+          if (noteId) push({ type: 'footnoteRef', noteId, format: refFormat });
           break;
         }
         case 'w:instrText': {
@@ -1022,6 +1068,8 @@ export async function importDocx(data: Uint8Array): Promise<DocumentModel> {
   );
 
   const reader = new Reader(pkg, fmt, styleIds, listIds, anchors);
+  const footnotesRel = pkg.findRel(main, REL.footnotes);
+  if (footnotesRel && !footnotesRel.external) reader.setFootnotes(pkg.xml(footnotesRel.target), pkg.part(footnotesRel.target));
   const body = child(documentRoot, 'w:body');
   const groups = reader.sectionGroups(body?.children ?? [], main);
   // L'ultimo gruppo vuoto senza sectPr (dopo un sectPr finale nel pPr) si scarta.
@@ -1036,5 +1084,6 @@ export async function importDocx(data: Uint8Array): Promise<DocumentModel> {
     metadata,
     media: reader.media,
     ...(Object.keys(comments).length ? { comments } : {}),
+    ...(Object.keys(reader.footnotes).length ? { footnotes: reader.footnotes } : {}),
   };
 }

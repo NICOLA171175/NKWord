@@ -166,7 +166,21 @@ export interface FieldInline {
   readonly revision?: Revision;
 }
 
-export type Inline = TextRun | ImageInline | BreakInline | TabInline | FieldInline;
+/**
+ * Richiamo di una nota a piè di pagina. Il numero non è salvato: lo calcola
+ * `footnoteNumbers` dall'ordine dei richiami nel documento. Lo stesso inline
+ * compare anche nel primo paragrafo della nota, dove mostra lo stesso numero.
+ */
+export interface FootnoteRefInline {
+  readonly type: 'footnoteRef';
+  /** Chiave di `DocumentModel.footnotes`. */
+  readonly noteId: Id;
+  readonly format: CharFormat;
+  /** Revisione in attesa (rilevamento modifiche). */
+  readonly revision?: Revision;
+}
+
+export type Inline = TextRun | ImageInline | BreakInline | TabInline | FieldInline | FootnoteRefInline;
 
 // ---------------------------------------------------------------------------
 // Blocchi
@@ -315,6 +329,15 @@ export interface ListDefinition {
 }
 
 // ---------------------------------------------------------------------------
+// Note a piè di pagina
+
+export interface Footnote {
+  readonly id: Id;
+  /** Testo della nota; contiene almeno un paragrafo. */
+  readonly blocks: readonly Block[];
+}
+
+// ---------------------------------------------------------------------------
 // Documento
 
 export interface DocumentMetadata {
@@ -347,6 +370,8 @@ export interface DocumentModel {
   readonly metadata: DocumentMetadata;
   /** Risorse binarie (immagini) indicizzate per chiave, come data URI. */
   readonly media: Readonly<Record<string, string>>;
+  /** Note a piè di pagina per id; una nota senza richiamo nel testo è ignorata. */
+  readonly footnotes?: Readonly<Record<Id, Footnote>>;
   /** Commenti per id; il testo commentato porta l'id in `CharFormat.commentIds`. */
   readonly comments?: Readonly<Record<Id, Comment>>;
 }

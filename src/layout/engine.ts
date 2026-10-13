@@ -3,8 +3,13 @@
  * pagine (sezioni, colonne, intestazioni e piè di pagina, interruzioni,
  * controllo righe isolate, "mantieni con il successivo") e implementa la
  * geometria del cursore (`caretRect`, `hitTest`, `selectionRects`).
+ *
+ * Le note a piè di pagina occupano il fondo della pagina in cui compare il
+ * loro richiamo: lo spazio del corpo si accorcia di conseguenza, e se una
+ * riga non ci sta più insieme alle sue note passa alla pagina successiva.
  */
 
+import { footnoteNumbers, paragraphs } from '../core';
 import type {
   Block,
   Decoration,
@@ -23,7 +28,7 @@ import type {
   Table,
   TextMeasurer,
 } from '../core';
-import { layoutFlow, layoutTable, paragraphDecorations, translateDecoration, translateLine, type LayoutContext, type RowBox } from './flow';
+import { layoutFlow, layoutTable, paragraphDecorations, translateDecoration, translateLine, type Flow, type LayoutContext, type RowBox } from './flow';
 import { createGeometry } from './geometry';
 import { computeMarkers } from './lists';
 import { hasFields, layoutParagraph, type FieldContext, type MarkerInfo, type ParaBox } from './paragraph';
@@ -45,6 +50,22 @@ interface Frame {
   readonly bottom: Points;
 }
 
+/** Spazio sopra le note a piè di pagina, con la riga separatrice a metà. */
+export const FOOTNOTE_SEPARATOR_SPACE: Points = 12;
+/** Lunghezza massima della riga separatrice (5 cm circa, come in Word). */
+export const FOOTNOTE_SEPARATOR_WIDTH: Points = 144;
+
+/** Nota collocata su una pagina; `line` è la riga del corpo che la richiama. */
+interface PageNote {
+  readonly noteId: Id;
+  readonly flow: Flow;
+  readonly line?: LineBox;
+}
+
+function notesHeight(notes: readonly PageNote[]): Points {
+  return notes.length ? FOOTNOTE_SEPARATOR_SPACE + notes.reduce((h, n) => h + n.flow.height, 0) : 0;
+}
+
 interface MutablePage {
   index: number;
   number: number;
@@ -60,6 +81,8 @@ interface MutablePage {
   hasBody: boolean;
   /** Punto più basso raggiunto dal corpo (per le sezioni continue). */
   maxY: Points;
+  /** Note a piè di pagina richiamate nella pagina, in ordine di lettura. */
+  notes: PageNote[];
 }
 
 function columnFrames(section: Section, top: Points, bottom: Points): Frame[] {
@@ -92,6 +115,10 @@ class Paginator implements LayoutContext {
   private col = 0;
   private y = 0;
   usedNumPages = false;
+  readonly footnotes: ReadonlyMap<Id, number>;
+  /** Richiami di nota nei paragrafi del corpo: offset e nota. */
+  private readonly noteRefs = new Map<Id, { offset: number; noteId: Id }[]>();
+  private readonly placedNotes = new Set<Id>();
 
   constructor(
     readonly doc: DocumentModel,
@@ -101,10 +128,24 @@ class Paginator implements LayoutContext {
     private readonly cache: (p: Paragraph, width: Points, fields: FieldContext, marker?: MarkerInfo) => ParaBox,
   ) {
     this.markers = computeMarkers(doc);
+    this.footnotes = footnoteNumbers(doc);
+    if (this.footnotes.size) {
+      for (const { paragraph: p } of paragraphs(doc)) {
+        let offset = 0;
+        for (const c of p.children) {
+          if (c.type === 'footnoteRef' && this.footnotes.has(c.noteId)) {
+            const refs = this.noteRefs.get(p.id) ?? [];
+            refs.push({ offset, noteId: c.noteId });
+            this.noteRefs.set(p.id, refs);
+          }
+          offset += c.type === 'text' ? c.text.length : 1;
+        }
+      }
+    }
   }
 
   get fields(): FieldContext {
-    return { page: this.page?.number ?? 1, numPages: this.numPages, now: this.now };
+    return { page: this.page?.number ?? 1, numPages: this.numPages, now: this.now, footnotes: this.footnotes };
   }
 
   paragraph(p: Paragraph, width: Points, fields: FieldContext): ParaBox {
@@ -148,6 +189,7 @@ class Paginator implements LayoutContext {
       footer: [],
       hasBody: false,
       maxY: 0,
+      notes: [],
     };
     this.pages.push(page);
     this.page = page;
@@ -193,7 +235,7 @@ class Paginator implements LayoutContext {
     const type = s.breakType ?? 'nextPage';
     if (type === 'continuous' && prev.width === s.page.width && prev.height === s.page.height) {
       this.section = s;
-      this.frames = columnFrames(s, prev.maxY, prev.contentRect.y + prev.contentRect.height);
+      this.frames = columnFrames(s, prev.maxY, prev.contentRect.y + prev.contentRect.height - notesHeight(prev.notes));
       this.col = 0;
       this.y = prev.maxY;
       return;
@@ -206,6 +248,50 @@ class Paginator implements LayoutContext {
       if (s.pageNumberStart === undefined) number++;
     }
     this.newPage(s, number, true);
+  }
+
+  // -- Note a piè di pagina ----------------------------------------------------
+
+  /** Note richiamate dalle righe e non ancora collocate, già impaginate. */
+  private newNotes(lines: readonly { paragraphId: Id; start: number; end: number }[]): PageNote[] {
+    if (!this.noteRefs.size) return [];
+    const out: PageNote[] = [];
+    for (const l of lines) {
+      for (const r of this.noteRefs.get(l.paragraphId) ?? []) {
+        if (r.offset < l.start || r.offset >= l.end || this.placedNotes.has(r.noteId) || out.some((n) => n.noteId === r.noteId)) continue;
+        const note = this.doc.footnotes?.[r.noteId];
+        if (note) out.push({ noteId: r.noteId, flow: layoutFlow(this, note.blocks, this.page.contentRect.width) });
+      }
+    }
+    return out;
+  }
+
+  /** Spazio in più che occuperebbero le note sulla pagina corrente. */
+  private notesDelta(notes: readonly PageNote[]): Points {
+    return notes.length ? notesHeight([...this.page.notes, ...notes]) - notesHeight(this.page.notes) : 0;
+  }
+
+  /** Il fondo del corpo si alza dell'altezza delle note (in tutte le colonne). */
+  private updateNoteArea(): void {
+    const bottom = this.page.contentRect.y + this.page.contentRect.height - notesHeight(this.page.notes);
+    this.frames = this.frames.map((f) => ({ ...f, bottom }));
+  }
+
+  private addNotes(notes: readonly PageNote[], line?: LineBox): void {
+    if (!notes.length) return;
+    for (const n of notes) {
+      this.page.notes.push({ ...n, line });
+      this.placedNotes.add(n.noteId);
+    }
+    this.updateNoteArea();
+  }
+
+  private removeNotes(line: LineBox): void {
+    const gone = this.page.notes.filter((n) => n.line === line);
+    if (!gone.length) return;
+    this.page.notes = this.page.notes.filter((n) => n.line !== line);
+    for (const n of gone) this.placedNotes.delete(n.noteId);
+    this.updateNoteArea();
   }
 
   // -- Paragrafi ---------------------------------------------------------------
@@ -259,12 +345,14 @@ class Paginator implements LayoutContext {
     const popLine = () => {
       const l = this.page.lines.pop()!;
       this.y -= l.height;
+      this.removeNotes(l);
     };
 
     let i = 0;
     while (i < n) {
       const l = lines[i]!;
-      if (this.y + l.height > this.frame.bottom + 0.01 && !this.atTop()) {
+      const notes = this.newNotes([{ paragraphId: p.id, start: l.start, end: l.end }]);
+      if (this.y + l.height + this.notesDelta(notes) > this.frame.bottom + 0.01 && !this.atTop()) {
         const onFrame = i - firstOnFrame;
         if (widowControl && onFrame === 1 && firstOnFrame === 0 && chunkTop > this.frame.y + 0.01) {
           // Riga orfana: la prima riga da sola in fondo alla pagina.
@@ -293,6 +381,7 @@ class Paginator implements LayoutContext {
         runs: l.runs,
       };
       this.pushLine(lb);
+      this.addNotes(notes, lb);
       i++;
       if (l.breakAfter) {
         closeChunk();
@@ -313,7 +402,9 @@ class Paginator implements LayoutContext {
     const dx = this.frame.x;
     const dy = this.y;
     this.page.decorations.push(...row.decorations.map((d) => translateDecoration(d, dx, dy)));
-    this.page.lines.push(...row.lines.map((l) => translateLine(l, dx, dy)));
+    const lines = row.lines.map((l) => translateLine(l, dx, dy));
+    this.page.lines.push(...lines);
+    this.addNotes(this.newNotes(lines), lines[0]);
     this.page.hasBody = true;
     this.y += row.height;
     this.page.maxY = Math.max(this.page.maxY, this.y);
@@ -324,7 +415,7 @@ class Paginator implements LayoutContext {
     let headerCount = 0;
     while (headerCount < box.rows.length && box.rows[headerCount]!.isHeader) headerCount++;
     box.rows.forEach((row, r) => {
-      if (this.y + row.height > this.frame.bottom + 0.01 && !this.atTop()) {
+      if (this.y + row.height + this.notesDelta(this.newNotes(row.lines)) > this.frame.bottom + 0.01 && !this.atTop()) {
         this.nextFrame();
         // Le righe di intestazione si ripetono in cima a ogni pagina.
         if (r >= headerCount) for (let h = 0; h < headerCount; h++) this.placeRow(box.rows[h]!);
@@ -334,7 +425,30 @@ class Paginator implements LayoutContext {
   }
 }
 
+/** Riga separatrice e testo delle note, impilati in fondo all'area del corpo. */
+function placeNotes(p: MutablePage): { lines: LineBox[]; decorations: Decoration[] } {
+  const lines: LineBox[] = [];
+  const decorations: Decoration[] = [];
+  if (!p.notes.length) return { lines, decorations };
+  const x = p.contentRect.x;
+  let y = p.contentRect.y + p.contentRect.height - notesHeight(p.notes);
+  decorations.push({
+    kind: 'border',
+    color: '#000000',
+    width: 0.5,
+    rect: { x, y: y + FOOTNOTE_SEPARATOR_SPACE / 2 - 0.25, width: Math.min(FOOTNOTE_SEPARATOR_WIDTH, p.contentRect.width), height: 0.5 },
+  });
+  y += FOOTNOTE_SEPARATOR_SPACE;
+  for (const n of p.notes) {
+    lines.push(...n.flow.lines.map((l) => translateLine(l, x, y)));
+    decorations.push(...n.flow.decorations.map((d) => translateDecoration(d, x, y)));
+    y += n.flow.height;
+  }
+  return { lines, decorations };
+}
+
 function toPageLayout(p: MutablePage): PageLayout {
+  const notes = placeNotes(p);
   return {
     index: p.index,
     number: p.number,
@@ -343,9 +457,10 @@ function toPageLayout(p: MutablePage): PageLayout {
     height: p.height,
     contentRect: p.contentRect,
     lines: p.lines,
-    decorations: p.decorations,
+    decorations: notes.decorations.length ? [...p.decorations, ...notes.decorations] : p.decorations,
     header: p.header,
     footer: p.footer,
+    ...(notes.lines.length ? { footnotes: notes.lines } : {}),
   };
 }
 

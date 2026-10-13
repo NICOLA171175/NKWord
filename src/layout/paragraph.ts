@@ -10,6 +10,7 @@ import type {
   DocumentModel,
   FieldKind,
   GlyphRun,
+  Id,
   ParaFormat,
   Paragraph,
   Points,
@@ -27,6 +28,8 @@ export interface FieldContext {
   readonly page: number;
   readonly numPages: number;
   readonly now: Date;
+  /** Numeri delle note a piè di pagina (vedi `footnoteNumbers`). */
+  readonly footnotes?: ReadonlyMap<Id, number>;
 }
 
 export interface ParaLine {
@@ -84,7 +87,7 @@ function fieldText(kind: FieldKind, ctx: FieldContext): string {
 }
 
 export function hasFields(p: Paragraph): boolean {
-  return p.children.some((c) => c.type === 'field');
+  return p.children.some((c) => c.type === 'field' || c.type === 'footnoteRef');
 }
 
 function textAtom(
@@ -200,6 +203,27 @@ function buildAtoms(doc: DocumentModel, p: Paragraph, measurer: TextMeasurer, fi
           width: m.width,
           trailing: 0,
           ascent: m.ascent,
+          descent: m.descent,
+          canBreakAfter: false,
+        });
+        offset += 1;
+        break;
+      }
+      case 'footnoteRef': {
+        // Il richiamo è sempre in apice; il numero dipende dall'ordine nel documento.
+        const format: CharFormat = { ...resolveCharFormat(doc.styles, p, inline.format), verticalAlign: 'superscript' };
+        const text = String(fields.footnotes?.get(inline.noteId) ?? '');
+        const m = measurer.measure(text, format);
+        const shift = baselineShift(format);
+        atoms.push({
+          kind: 'field',
+          start: offset,
+          end: offset + 1,
+          text,
+          format,
+          width: m.width,
+          trailing: 0,
+          ascent: m.ascent + shift,
           descent: m.descent,
           canBreakAfter: false,
         });

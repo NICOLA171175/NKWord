@@ -211,6 +211,21 @@ export const RIBBON_ITEMS: readonly UiRibbonItem[] = [
   }),
 
   // Riferimenti ---------------------------------------------------------
+  item('references', 'Note a piè di pagina', 'footnote.insert', 'Inserisci nota…', {
+    icon: 'ab¹',
+    prompt: (ask) => {
+      const text = ask('Testo della nota a piè di pagina:');
+      return text === null ? undefined : { text };
+    },
+  }),
+  item('references', 'Note a piè di pagina', 'footnote.edit', 'Modifica nota…', {
+    icon: '✎¹',
+    prompt: (ask) => {
+      const text = ask('Nuovo testo della nota (cursore accanto al numero della nota):');
+      return text === null ? undefined : { text };
+    },
+  }),
+  item('references', 'Note a piè di pagina', 'footnote.delete', 'Elimina nota', { icon: '✕¹' }),
   item('references', 'Campi', 'insert.field', 'Numero di pagine', { icon: '#', args: { kind: 'numPages' } }),
 
   // Revisione -----------------------------------------------------------

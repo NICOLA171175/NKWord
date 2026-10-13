@@ -24,7 +24,7 @@ import type {
 } from './types';
 import type { Points } from './units';
 
-export type CommandOwner = 'core' | 'editing' | 'structures' | 'layout' | 'io' | 'ui' | 'comments';
+export type CommandOwner = 'core' | 'editing' | 'structures' | 'layout' | 'io' | 'ui' | 'comments' | 'footnotes';
 
 /** Argomenti di ogni comando (`void` = nessun argomento). */
 export interface CommandArgs {
@@ -125,6 +125,14 @@ export interface CommandArgs {
   'view.zoom': { zoom: number };
   'view.toggleFormattingMarks': void;
   'view.print': void;
+
+  // footnotes: note a piè di pagina ------------------------------------
+  /** Inserisce il richiamo alla fine della selezione e crea la nota. */
+  'footnote.insert': { text?: string };
+  /** Sostituisce il testo della nota (default: quella vicina al cursore). */
+  'footnote.edit': { text: string; noteId?: Id };
+  /** Elimina richiamo e nota (default: quella vicina al cursore). */
+  'footnote.delete': { noteId?: Id };
 }
 
 export type CommandId = keyof CommandArgs;
@@ -201,6 +209,9 @@ export const COMMAND_OWNERS: { readonly [K in CommandId]: CommandOwner } = {
   'view.zoom': 'ui',
   'view.toggleFormattingMarks': 'ui',
   'view.print': 'ui',
+  'footnote.insert': 'footnotes',
+  'footnote.edit': 'footnotes',
+  'footnote.delete': 'footnotes',
 };
 
 export const COMMAND_IDS = Object.keys(COMMAND_OWNERS) as CommandId[];

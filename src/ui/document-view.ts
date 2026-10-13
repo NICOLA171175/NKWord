@@ -12,6 +12,7 @@
  */
 
 import {
+  footnoteNumbers,
   inlineLength,
   isCollapsed,
   orderedRange,
@@ -211,6 +212,7 @@ export class DocumentView {
       };
       area('page-area page-header-area', page.header);
       area('page-area page-body-area', page.lines);
+      if (page.footnotes?.length) area('page-area page-footnote-area', page.footnotes);
       area('page-area page-footer-area', page.footer);
       this.pages.append(el);
       pageEls.push(el);
@@ -439,6 +441,14 @@ export class DocumentView {
         span.className = 'run run-field';
         span.textContent = FIELD_PLACEHOLDER[inline.kind] ?? '';
         applyStyle(span, charStyle(resolveCharFormat(sheet, p, inline.format), vs.zoom));
+        return span;
+      }
+      case 'footnoteRef': {
+        // Vista senza impaginazione: solo il numero in apice.
+        const span = document.createElement('span');
+        span.className = 'run run-footnote-ref';
+        span.textContent = String(footnoteNumbers(this.editor.state.doc).get(inline.noteId) ?? '');
+        applyStyle(span, charStyle({ ...resolveCharFormat(sheet, p, inline.format), verticalAlign: 'superscript' }, vs.zoom));
         return span;
       }
     }

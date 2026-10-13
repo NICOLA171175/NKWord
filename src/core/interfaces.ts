@@ -90,6 +90,8 @@ export interface PageLayout {
   readonly decorations: readonly Decoration[];
   readonly header: readonly LineBox[];
   readonly footer: readonly LineBox[];
+  /** Testo delle note a piè di pagina richiamate nella pagina (la riga separatrice è fra le decorazioni). */
+  readonly footnotes?: readonly LineBox[];
 }
 
 export interface DocumentLayout {
