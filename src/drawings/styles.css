@@ -1,0 +1,182 @@
+/* Forme, caselle di testo e grafici sulle pagine. */
+
+.page-laid-out .drawing {
+  position: absolute;
+  cursor: move;
+  z-index: 2;
+}
+
+.drawing-svg {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Le linee sono sottili: un'area invisibile più larga le rende facili da prendere. */
+.drawing-hit {
+  position: absolute;
+  inset: -4px;
+}
+
+.drawing-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
+  line-height: 1.15;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  pointer-events: none;
+}
+
+textarea.drawing-editor {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  pointer-events: auto;
+  cursor: text;
+}
+
+.drawing.selected::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border: 1px solid #8a8886;
+  pointer-events: none;
+}
+
+.drawing-shape-line.selected::after,
+.drawing-shape-arrow.selected::after,
+.drawing-shape-doubleArrow.selected::after {
+  display: none;
+}
+
+.drawing.editing::after {
+  border-style: dashed;
+}
+
+.drawing-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -5px 0 0 -5px;
+  background: #fff;
+  border: 1px solid #605e5c;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.drawing-handle-nw { left: 0; top: 0; cursor: nwse-resize; }
+.drawing-handle-n { left: 50%; top: 0; cursor: ns-resize; }
+.drawing-handle-ne { left: 100%; top: 0; cursor: nesw-resize; }
+.drawing-handle-e { left: 100%; top: 50%; cursor: ew-resize; }
+.drawing-handle-se { left: 100%; top: 100%; cursor: nwse-resize; }
+.drawing-handle-s { left: 50%; top: 100%; cursor: ns-resize; }
+.drawing-handle-sw { left: 0; top: 100%; cursor: nesw-resize; }
+.drawing-handle-w { left: 0; top: 50%; cursor: ew-resize; }
+.drawing-handle-start,
+.drawing-handle-end { cursor: crosshair; }
+
+/* Finestra "Modifica dati del grafico". */
+
+.drawing-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.drawing-dialog {
+  max-width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 16px 20px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  font: 13px 'Segoe UI', system-ui, sans-serif;
+}
+
+.drawing-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.drawing-dialog-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.drawing-dialog-field input,
+.drawing-dialog-field select {
+  flex: 1;
+  padding: 3px 6px;
+}
+
+.chart-editor-grid {
+  border-collapse: collapse;
+  margin: 8px 0;
+}
+
+.chart-editor-grid td {
+  border: 1px solid #d4d4d4;
+  padding: 0;
+}
+
+.chart-editor-grid input {
+  width: 96px;
+  border: none;
+  padding: 4px 6px;
+  font: inherit;
+}
+
+.chart-editor-grid .chart-editor-series,
+.chart-editor-grid .chart-editor-category {
+  font-weight: 600;
+  background: #f3f3f3;
+}
+
+.chart-editor-grid .chart-editor-value {
+  text-align: right;
+}
+
+.chart-editor-grid .chart-editor-corner {
+  background: #e8e8e8;
+}
+
+.drawing-dialog-tools,
+.drawing-dialog-footer {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.drawing-dialog-footer {
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.drawing-dialog button {
+  padding: 4px 12px;
+  font: inherit;
+}
+
+.drawing-dialog-ok {
+  background: #2b579a;
+  color: #fff;
+  border: 1px solid #2b579a;
+  border-radius: 3px;
+}

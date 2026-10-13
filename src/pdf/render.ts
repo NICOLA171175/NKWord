@@ -6,6 +6,7 @@
 
 import type { CharFormat, DocumentLayout, DocumentMetadata, GlyphRun, LineBox, PageLayout, TextMeasurer } from '../core';
 import { normalizeColor } from '../io/util/color';
+import { drawingPdfOps } from '../drawings/pdf';
 import { baselineShift, effectiveFontSize, SMALL_CAPS_SCALE } from '../layout';
 import { encodedWidth, encodeWinAnsi, standardFont, type StandardFont } from './fonts';
 import { loadImage, type ImageRasterizer, type PdfImage } from './images';
@@ -194,6 +195,8 @@ export async function layoutToPdf(layout: DocumentLayout, options: PdfRenderOpti
       if (color) canvas.fillRect(d.rect.x, d.rect.y, d.rect.width, d.rect.height, color);
     }
     for (const lines of [page.header, page.lines, page.footnotes ?? [], page.footer]) for (const l of lines) canvas.line(l);
+    // Forme, caselle di testo e grafici: davanti al testo.
+    canvas.ops.push(...drawingPdfOps(layout, page.index, (font) => fonts.use(font)));
     contents.push({ id: writer.addStream('', canvas.ops.join('\n')), canvas });
     pageIds.push(writer.alloc());
   }

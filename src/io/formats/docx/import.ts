@@ -32,6 +32,8 @@ import {
   type PageSetup,
   type ParaFormat,
   type Paragraph,
+  paragraphs,
+  type Drawing,
   type Revision,
   type Section,
   type Style,
@@ -42,6 +44,7 @@ import {
   type TableCellFormat,
   type TableRow,
 } from '../../../core';
+import { CHART_NS, readDrawing, resolvePosition, WPS_NS, type ReadDrawing } from '../../../drawings/docx';
 import { DOCX_HIGHLIGHTS, normalizeColor } from '../../util/color';
 import { mimeFromExtension, toDataUri } from '../../util/encoding';
 import { child, elements, isElement, parseXml, textContent, type MarkupElement, type MarkupNode } from '../../util/markup';
@@ -62,6 +65,8 @@ const CANONICAL_PREFIX: Record<string, string> = {
   [NS.a]: 'a',
   [NS.pic]: 'pic',
   'urn:schemas-microsoft-com:vml': 'v',
+  [WPS_NS]: 'wps',
+  [CHART_NS]: 'c',
   'http://schemas.openxmlformats.org/markup-compatibility/2006': 'mc',
   [NS.rels]: 'rel',
   'http://purl.org/dc/elements/1.1/': 'dc',
@@ -540,6 +545,10 @@ class Reader {
   private currentNote: Id | undefined;
   /** Commenti aperti (`w:commentRangeStart` senza ancora la fine), come id del modello. */
   private readonly openComments: Id[] = [];
+  /** Forme e grafici letti nel paragrafo corrente, in attesa del suo id. */
+  private readonly pendingDrawings: ReadDrawing[] = [];
+  /** Forme e grafici con il paragrafo di ancoraggio, da collocare quando si conoscono i margini. */
+  readonly drawings: (ReadDrawing & { readonly anchor: Id })[] = [];
 
   constructor(
     private readonly pkg: Package,
@@ -705,6 +714,13 @@ class Reader {
         case 'w:drawing': {
           const img = this.drawing(c, part);
           if (img) push(img);
+          else if (!this.suppressed && !/header|footer|footnotes/.test(part.path)) {
+            const shape = readDrawing(c, (relId) => {
+              const rel = part.rels.get(relId);
+              return rel && !rel.external ? this.pkg.xml(rel.target) : undefined;
+            });
+            if (shape) this.pendingDrawings.push(shape);
+          }
           break;
         }
         case 'w:pict':
@@ -714,7 +730,10 @@ class Reader {
           break;
         }
         case 'mc:AlternateContent': {
-          const branch = child(c, 'mc:Fallback') ?? child(c, 'mc:Choice');
+          // Forme e grafici di Word 2010+: la scelta moderna (la riserva VML non si legge).
+          const choice = child(c, 'mc:Choice');
+          const modern = choice && (findDeep(choice, 'wps:wsp') || findDeep(choice, 'c:chart'));
+          const branch = (modern ? choice : undefined) ?? child(c, 'mc:Fallback') ?? choice;
           if (branch) this.run({ ...r, children: branch.children }, part, link, out);
           break;
         }
@@ -822,9 +841,11 @@ class Reader {
     const markPr = child(pPr, 'w:rPr');
     const mark = this.fmt.char(markPr);
     const revision = readRevision(child(markPr, 'w:ins') ?? child(markPr, 'w:del') ?? child(markPr, 'w:moveTo') ?? child(markPr, 'w:moveFrom'));
+    const id = newId();
+    for (const d of this.pendingDrawings.splice(0)) this.drawings.push({ ...d, anchor: id });
     return {
       type: 'paragraph',
-      id: newId(),
+      id,
       format: this.fmt.para(pPr, this.listIds),
       children: normalizeInlines(inlines),
       ...(styleId ? { styleId } : {}),
@@ -1077,7 +1098,7 @@ export async function importDocx(data: Uint8Array): Promise<DocumentModel> {
   if (groups.length > 1 && last && !last.blocks.length && !last.sectPr) groups.pop();
   const sections = inheritHeaders(groups.map((g) => reader.section(g, main)));
 
-  return {
+  const doc: DocumentModel = {
     sections,
     styles: sheet,
     lists,
@@ -1086,4 +1107,16 @@ export async function importDocx(data: Uint8Array): Promise<DocumentModel> {
     ...(Object.keys(comments).length ? { comments } : {}),
     ...(Object.keys(reader.footnotes).length ? { footnotes: reader.footnotes } : {}),
   };
+  // Le forme si collocano rispetto alla pagina: i riferimenti ai margini usano quelli della sezione.
+  if (!reader.drawings.length) return doc;
+  const sectionOf = new Map<Id, number>();
+  for (const { paragraph, sectionIndex } of paragraphs(doc)) sectionOf.set(paragraph.id, sectionIndex);
+  const drawings: Record<Id, Drawing> = {};
+  // L'ordine di lettura segue i paragrafi; quello di sovrapposizione è in relativeHeight.
+  const ordered = [...reader.drawings].sort((a, b) => a.z - b.z);
+  for (const { drawing, h, v, anchor } of ordered) {
+    const margins = sections[sectionOf.get(anchor) ?? 0]?.page.margins;
+    drawings[drawing.id] = { ...drawing, anchor, x: resolvePosition(h, margins?.left ?? 72), y: resolvePosition(v, margins?.top ?? 72) };
+  }
+  return { ...doc, drawings };
 }

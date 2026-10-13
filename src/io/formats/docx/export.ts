@@ -14,6 +14,7 @@ import {
   type Borders,
   type CharFormat,
   type DocumentModel,
+  type Drawing,
   type FieldKind,
   type HeaderFooter,
   type Id,
@@ -25,6 +26,7 @@ import {
   type Style,
   type Table,
 } from '../../../core';
+import { CHART_CT, CHART_REL, chartPartXml, drawingRunXml, WPS_NS } from '../../../drawings/docx';
 import { highlightName } from '../../util/color';
 import { extensionFromMime, parseDataUri } from '../../util/encoding';
 import { escapeAttr, escapeText } from '../../util/markup';
@@ -143,6 +145,9 @@ class DocxWriter {
   private bookmarkId = 0;
 
   private readonly comments: ReturnType<typeof commentMarks>;
+  /** Forme, caselle di testo e grafici per paragrafo di ancoraggio, con la posizione nella pila. */
+  private readonly drawings = new Map<Id, { drawing: Drawing; z: number }[]>();
+  private chartCount = 0;
 
   constructor(private readonly doc: DocumentModel) {
     this.comments = commentMarks(doc);
@@ -150,6 +155,28 @@ class DocxWriter {
     let n = 1;
     for (const id of Object.keys(doc.lists)) this.numIds.set(id, n++);
     this.footnoteIds = footnoteNumbers(doc);
+    Object.values(doc.drawings ?? {}).forEach((drawing, z) => {
+      const list = this.drawings.get(drawing.anchor);
+      if (list) list.push({ drawing, z });
+      else this.drawings.set(drawing.anchor, [{ drawing, z }]);
+    });
+  }
+
+  /** Run dei disegni ancorati al paragrafo (all'inizio, come li mette Word). */
+  private drawingsXml(p: Paragraph, rels: Rels): string {
+    const list = p.id ? this.drawings.get(p.id) : undefined;
+    if (!list) return '';
+    return list
+      .map(({ drawing, z }) => {
+        let chartRel: string | undefined;
+        if (drawing.kind === 'chart' && drawing.chart) {
+          const name = `charts/chart${++this.chartCount}.xml`;
+          this.addFile(`word/${name}`, chartPartXml(drawing.chart, drawing), CHART_CT);
+          chartRel = rels.add(CHART_REL, name);
+        }
+        return drawingRunXml(drawing, ++this.drawingId, z, chartRel);
+      })
+      .join('');
   }
 
   private addFile(path: string, content: string | Uint8Array, contentType?: string): void {
@@ -321,7 +348,7 @@ class DocxWriter {
       const id = this.bookmarkId++;
       runs = `<w:bookmarkStart w:id="${id}" w:name="${escapeAttr(bookmark)}"/>${runs}<w:bookmarkEnd w:id="${id}"/>`;
     }
-    runs = (wrap.before ?? '') + runs + (wrap.after ?? '');
+    runs = (wrap.before ?? '') + this.drawingsXml(p, rels) + runs + (wrap.after ?? '');
     return `<w:p>${this.paraFormatXml(p.format, p.styleId, p.markFormat, sectPr, p.revision)}${runs}</w:p>`;
   }
 
@@ -582,7 +609,7 @@ class DocxWriter {
 const emptyParagraph: Paragraph = { type: 'paragraph', id: '', format: {}, children: [] };
 
 function namespaces(): string {
-  return `xmlns:w="${NS.w}" xmlns:r="${NS.r}" xmlns:wp="${NS.wp}" xmlns:a="${NS.a}" xmlns:pic="${NS.pic}"`;
+  return `xmlns:w="${NS.w}" xmlns:r="${NS.r}" xmlns:wp="${NS.wp}" xmlns:a="${NS.a}" xmlns:pic="${NS.pic}" xmlns:wps="${WPS_NS}"`;
 }
 
 export function exportDocx(doc: DocumentModel): Promise<Uint8Array> {

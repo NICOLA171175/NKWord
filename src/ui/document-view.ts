@@ -35,7 +35,7 @@ import {
   type Section,
   type Selection,
 } from '../core';
-import { collectMarks, onExtensionsChange, type TextMark } from './extensions';
+import { collectMarks, onExtensionsChange, viewExtensions, type TextMark } from './extensions';
 import { runFirstExecutable } from './input';
 import { TabLeaders } from './tab-leaders';
 import type { ViewState, ViewStore } from './view-state';
@@ -239,6 +239,7 @@ export class DocumentView {
         pageEls[page]?.append(r);
       }
     }
+    for (const ext of viewExtensions(this.editor)) ext.decoratePages?.(pageEls, layout, vs.zoom);
     const c = engine.caretRect(layout, selection.focus);
     if (c && pageEls[c.page]) {
       const caret = document.createElement('div');

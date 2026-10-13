@@ -8,7 +8,7 @@
  * dell'index.ts del modulo (vedi `collectRibbonItems`).
  */
 
-import type { Editor, EditorState, Id, Keybinding, Position } from '../core';
+import type { DocumentLayout, Editor, EditorState, Id, Keybinding, Position } from '../core';
 
 /** Segno disegnato sopra un intervallo di testo di un paragrafo. */
 export interface TextMark {
@@ -41,6 +41,11 @@ export interface ViewExtension {
   readonly keybindings?: readonly Keybinding[];
   /** Stato attivo di un pulsante a interruttore o di una voce di menu a tendina. */
   isActive?(commandId: string, args?: unknown): boolean;
+  /**
+   * Aggiunge elementi sopra le pagine impaginate (es. forme e grafici), dopo
+   * testo e selezione. `pages[i]` è l'elemento della pagina `i` del layout.
+   */
+  decoratePages?(pages: readonly HTMLElement[], layout: DocumentLayout, zoom: number): void;
   /** Avvisa quando segni o stato cambiano senza un cambiamento dell'editor (es. dizionario caricato). */
   onChange?(listener: () => void): () => void;
 }

@@ -338,6 +338,65 @@ export interface Footnote {
 }
 
 // ---------------------------------------------------------------------------
+// Forme, caselle di testo e grafici
+
+/** Forme predefinite (nomi come in DrawingML, salvo 'arrow'/'doubleArrow': linee con punta). */
+export type ShapeKind =
+  | 'rect' | 'roundRect' | 'ellipse' | 'triangle' | 'rtTriangle' | 'diamond' | 'pentagon' | 'hexagon'
+  | 'star5' | 'heart' | 'rightArrow' | 'leftArrow' | 'upArrow' | 'downArrow' | 'wedgeRectCallout'
+  | 'line' | 'arrow' | 'doubleArrow';
+
+/** Testo dentro una forma o una casella di testo; '\n' separa i paragrafi. */
+export interface DrawingText {
+  readonly text: string;
+  readonly format: CharFormat;
+  readonly align?: Alignment;
+  readonly verticalAlign?: 'top' | 'middle' | 'bottom';
+}
+
+export interface ChartSeries {
+  readonly name: string;
+  readonly values: readonly number[];
+  readonly color?: Color;
+}
+
+export interface ChartData {
+  /** column: barre verticali (istogramma); bar: barre orizzontali. */
+  readonly type: 'column' | 'bar' | 'line' | 'pie';
+  readonly title?: string;
+  readonly categories: readonly string[];
+  /** La torta usa solo la prima serie. */
+  readonly series: readonly ChartSeries[];
+}
+
+/**
+ * Oggetto disegnato davanti al testo, come le forme di Word "Davanti al
+ * testo". È ancorato a un paragrafo (che decide la pagina) e posizionato
+ * rispetto all'angolo in alto a sinistra di quella pagina.
+ */
+export interface Drawing {
+  readonly id: Id;
+  readonly kind: 'shape' | 'textbox' | 'chart';
+  /** Paragrafo del corpo a cui è ancorato. */
+  readonly anchor: Id;
+  readonly x: Points;
+  readonly y: Points;
+  readonly width: Points;
+  readonly height: Points;
+  /** Solo per kind 'shape' (le caselle di testo sono rettangoli). */
+  readonly shape?: ShapeKind;
+  /** Linee: la linea va dall'angolo in alto a sinistra a quello in basso a destra, salvo ribaltamenti. */
+  readonly flipH?: boolean;
+  readonly flipV?: boolean;
+  /** null = nessun riempimento / nessun contorno. */
+  readonly fill?: Color | null;
+  readonly stroke?: Color | null;
+  readonly strokeWidth?: Points;
+  readonly text?: DrawingText;
+  readonly chart?: ChartData;
+}
+
+// ---------------------------------------------------------------------------
 // Documento
 
 export interface DocumentMetadata {
@@ -374,6 +433,8 @@ export interface DocumentModel {
   readonly footnotes?: Readonly<Record<Id, Footnote>>;
   /** Commenti per id; il testo commentato porta l'id in `CharFormat.commentIds`. */
   readonly comments?: Readonly<Record<Id, Comment>>;
+  /** Forme, caselle di testo e grafici per id; l'ordine delle chiavi è l'ordine di sovrapposizione. */
+  readonly drawings?: Readonly<Record<Id, Drawing>>;
 }
 
 // ---------------------------------------------------------------------------
