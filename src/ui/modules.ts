@@ -5,6 +5,7 @@
  */
 
 import type { EditorModule } from '../core';
+import { RIBBON_TABS, type UiRibbonItem } from './ribbon-items';
 
 export function isEditorModule(value: unknown): value is EditorModule {
   return (
@@ -35,6 +36,33 @@ export function collectModules(exportsList: readonly Record<string, unknown>[], 
         add((value as () => unknown)());
       } else add(value);
     }
+  }
+  return out;
+}
+
+function isRibbonItem(value: unknown): value is UiRibbonItem {
+  const v = value as UiRibbonItem;
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof v.commandId === 'string' &&
+    typeof v.label === 'string' &&
+    typeof v.group === 'string' &&
+    RIBBON_TABS.some((t) => t.id === v.tab)
+  );
+}
+
+/**
+ * Voci della barra multifunzione dichiarate dai moduli: l'esportazione
+ * `ribbonItems` di un `index.ts` (array di `RibbonItem` con `label`). Così un
+ * modulo con comandi fuori dal catalogo del core compare nella barra senza
+ * modificare la UI.
+ */
+export function collectRibbonItems(exportsList: readonly Record<string, unknown>[]): UiRibbonItem[] {
+  const out: UiRibbonItem[] = [];
+  for (const exports of exportsList) {
+    const items = exports.ribbonItems;
+    if (Array.isArray(items)) out.push(...items.filter(isRibbonItem));
   }
   return out;
 }

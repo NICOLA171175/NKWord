@@ -35,6 +35,7 @@ import {
   type Selection,
 } from '../core';
 import { runFirstExecutable } from './input';
+import { TabLeaders } from './tab-leaders';
 import type { ViewState, ViewStore } from './view-state';
 
 const FIELD_PLACEHOLDER: Record<string, string> = { page: '1', numPages: '1', date: 'gg/mm/aaaa', time: 'hh:mm' };
@@ -155,6 +156,7 @@ export class DocumentView {
     const { doc, selection } = this.editor.state;
     const px = (pt: number) => `${ptToPx(pt, vs.zoom)}px`;
     const pageEls: HTMLElement[] = [];
+    const leaders = new TabLeaders(doc);
     for (const page of layout.pages) {
       const el = document.createElement('div');
       el.className = 'page page-laid-out';
@@ -172,7 +174,7 @@ export class DocumentView {
       const area = (cls: string, lines: readonly LineBox[]) => {
         const div = document.createElement('div');
         div.className = cls;
-        for (const line of lines) div.append(this.renderLine(line, vs.zoom));
+        for (const line of lines) div.append(this.renderLine(line, vs.zoom, leaders, page.contentRect.x));
         el.append(div);
       };
       area('page-area page-header-area', page.header);
@@ -200,12 +202,21 @@ export class DocumentView {
     }
   }
 
-  private renderLine(line: LineBox, zoom: number): HTMLElement {
+  private renderLine(line: LineBox, zoom: number, leaders: TabLeaders, columnLeft: number): HTMLElement {
     const px = (pt: number) => `${ptToPx(pt, zoom)}px`;
     const el = document.createElement('div');
     el.className = 'line';
     Object.assign(el.style, { left: px(line.x), top: px(line.y), width: px(line.width), height: px(line.height) });
-    for (const run of line.runs) el.append(this.renderRun(run, line, zoom));
+    for (const run of line.runs) {
+      const runEl = this.renderRun(run, line, zoom);
+      const leader = leaders.leader(run, line.x - columnLeft + run.x);
+      if (leader) {
+        // Più caratteri del necessario: l'eccesso è tagliato a sinistra.
+        runEl.textContent = leader.repeat(Math.ceil(run.width / 2) + 1);
+        runEl.classList.add('run-tab-leader');
+      }
+      el.append(runEl);
+    }
     return el;
   }
 

@@ -35,6 +35,7 @@ import {
   REL,
   UNDERLINE_TO_DOCX,
 } from './common';
+import { internalAnchors, paragraphBookmark, tocFieldWraps, type FieldWrap } from './toc';
 
 const XML_DECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 const hex = (c: string) => c.replace('#', '').toUpperCase();
@@ -115,8 +116,11 @@ class DocxWriter {
   private headerCount = 0;
   private footerCount = 0;
   private usesEvenHeaders = false;
+  private readonly anchors: ReadonlySet<string>;
+  private bookmarkId = 0;
 
   constructor(private readonly doc: DocumentModel) {
+    this.anchors = internalAnchors(doc);
     let n = 1;
     for (const id of Object.keys(doc.lists)) this.numIds.set(id, n++);
   }
@@ -226,7 +230,7 @@ class DocxWriter {
     }
   }
 
-  paragraphXml(p: Paragraph, rels: Rels, sectPr = ''): string {
+  paragraphXml(p: Paragraph, rels: Rels, sectPr = '', wrap: FieldWrap = {}): string {
     let runs = '';
     let i = 0;
     const children = p.children;
@@ -249,6 +253,12 @@ class DocxWriter {
         ? `<w:hyperlink w:anchor="${escapeAttr(link.slice(1))}">${inner}</w:hyperlink>`
         : `<w:hyperlink r:id="${rels.add(REL.hyperlink, link, true)}">${inner}</w:hyperlink>`;
     }
+    const bookmark = paragraphBookmark(p, this.anchors);
+    if (bookmark) {
+      const id = this.bookmarkId++;
+      runs = `<w:bookmarkStart w:id="${id}" w:name="${escapeAttr(bookmark)}"/>${runs}<w:bookmarkEnd w:id="${id}"/>`;
+    }
+    runs = (wrap.before ?? '') + runs + (wrap.after ?? '');
     return `<w:p>${this.paraFormatXml(p.format, p.styleId, p.markFormat, sectPr)}${runs}</w:p>`;
   }
 
@@ -299,7 +309,8 @@ class DocxWriter {
   }
 
   blocksXml(blocks: readonly Block[], rels: Rels): string {
-    return blocks.map((b) => (b.type === 'paragraph' ? this.paragraphXml(b, rels) : this.tableXml(b, rels))).join('');
+    const wraps = tocFieldWraps(blocks, this.doc.styles);
+    return blocks.map((b) => (b.type === 'paragraph' ? this.paragraphXml(b, rels, '', wraps.get(b)) : this.tableXml(b, rels))).join('');
   }
 
   // -------------------------------------------------------------------------

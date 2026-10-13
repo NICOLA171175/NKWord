@@ -9,6 +9,7 @@ import { InputController, runFirstExecutable } from './input';
 import { Keymap, defaultKeybindings } from './keymap';
 import { createUiModule, type UiModule } from './module';
 import { Ribbon } from './ribbon';
+import { RIBBON_ITEMS, type UiRibbonItem } from './ribbon-items';
 import { StatusBar } from './status-bar';
 
 export interface AppOptions {
@@ -16,6 +17,8 @@ export interface AppOptions {
   readonly ui?: UiModule;
   readonly keymap?: Keymap;
   readonly ask?: (message: string, initial?: string) => string | null;
+  /** Voci aggiunte dai moduli in coda a quelle predefinite (vedi `collectRibbonItems`). */
+  readonly ribbonItems?: readonly UiRibbonItem[];
 }
 
 export interface App {
@@ -73,6 +76,7 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
   });
 
   const ribbon = new Ribbon(editor, uiModule, {
+    ...(options.ribbonItems?.length ? { items: [...RIBBON_ITEMS, ...options.ribbonItems] } : {}),
     keymap,
     ask: options.ask,
     handlers: { 'file.open': () => fileInput.click() },
