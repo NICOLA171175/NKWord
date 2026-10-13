@@ -1,0 +1,5 @@
+/* Puntatore a pennello mentre Copia formato è acceso. */
+.doc-scroll.formatpainter-active,
+.doc-scroll.formatpainter-active * {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M4 2v14M2 2h4M2 16h4' stroke='%23000' stroke-width='1.5' fill='none'/%3E%3Cpath d='M12 6h9v4h-9z' fill='%23fff' stroke='%23000'/%3E%3Cpath d='M16.5 10v3M15 13h3v8h-3z' fill='%23fff' stroke='%23000'/%3E%3C/svg%3E") 4 9, text;
+}

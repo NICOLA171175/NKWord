@@ -49,6 +49,7 @@ const ICONS: Record<string, string> = {
   'paragraph.shading':
     S('m4 9 5.5-5.5 6 6L10 15z') + S('M4 9h11.5') + S('M16.5 11.5s1.5 1.7 1.5 2.7a1.5 1.5 0 0 1-3 0c0-1 1.5-2.7 1.5-2.7z') + '<path class="icon-bar icon-bar-shading" d="M2 18.5h16"/>',
   'paragraph.borders': '<rect x="3" y="3" width="14" height="14" stroke-dasharray="1.5 2"/>' + S('M10 3v14M3 10h14').replace('<path', '<path stroke-dasharray="1.5 2"') + S('M2.5 17h15').replace('<path', '<path stroke-width="2"'),
+  'formatPainter.toggle': S('M4 3h10v4H4z') + S('M14 5h2.5v4.5H9.5V12') + S('M8.5 12h2v5.5h-2z'),
   'format.link': S('M8.5 11.5a3 3 0 0 0 4.2 0l3-3a3 3 0 0 0-4.2-4.2l-1 1') + S('M11.5 8.5a3 3 0 0 0-4.2 0l-3 3a3 3 0 0 0 4.2 4.2l1-1'),
 
   'list.toggleBullet':
