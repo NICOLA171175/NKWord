@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Clone di Microsoft Word in TypeScript",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
