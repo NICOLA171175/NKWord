@@ -1,0 +1,74 @@
+/*
+ * Indicatore della dettatura (vedi view.ts). I colori vengono dalle
+ * variabili dell'interfaccia, quindi seguono il tema chiaro o scuro.
+ */
+
+.dictation {
+  position: fixed;
+  left: 50%;
+  bottom: 40px;
+  z-index: 950;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(640px, calc(100vw - 32px));
+  padding: 8px 10px 8px 14px;
+  border: 1px solid var(--ribbon-border, #e1dfdd);
+  border-radius: 20px;
+  background: var(--chrome, #f3f3f3);
+  color: var(--text, #242424);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  font: 13px 'Segoe UI', system-ui, sans-serif;
+}
+.dictation[hidden] {
+  display: none;
+}
+.dictation-mic {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 15px;
+}
+.dictation-listening .dictation-mic {
+  background: var(--accent, #2b579a);
+  animation: dictation-pulse 1.4s ease-in-out infinite;
+}
+.dictation-error .dictation-mic {
+  background: #fde7e9;
+}
+.dictation-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dictation-close {
+  flex: none;
+  padding: 4px 10px;
+  border: 1px solid var(--ribbon-border, #e1dfdd);
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.dictation-close:hover {
+  background: var(--hover, #e6e6e6);
+}
+@keyframes dictation-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(43, 87, 154, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(43, 87, 154, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dictation-listening .dictation-mic {
+    animation: none;
+  }
+}

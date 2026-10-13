@@ -1,6 +1,7 @@
 // Finestra desktop di NKoffice (Electron): carica l'app già compilata in app/
 // senza server né Node.js installato sul PC.
 const { app, BrowserWindow, Menu, ipcMain, session, shell } = require('electron');
+const { execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -55,6 +56,32 @@ ipcMain.handle('nkoffice:leggi-file', async (_evento, percorso) => {
     throw new Error('File non valido');
   }
   return new Uint8Array(await fs.promises.readFile(percorso));
+});
+
+// Dettatura: su Windows apre la dettatura del sistema premendo Win+H, che
+// scrive nel campo con il focus (il documento). Il riconoscimento vocale
+// del browser non funziona in Electron (vedi src/dictation/engine.ts).
+const PREMI_WIN_H = [
+  '$k = Add-Type -Name Tasti -Namespace NKoffice -PassThru -MemberDefinition',
+  "'[DllImport(\"user32.dll\")] public static extern void keybd_event(byte v, byte s, uint f, System.UIntPtr e);';",
+  '$k::keybd_event(0x5B, 0, 0, [UIntPtr]::Zero);',
+  '$k::keybd_event(0x48, 0, 0, [UIntPtr]::Zero);',
+  '$k::keybd_event(0x48, 0, 2, [UIntPtr]::Zero);',
+  '$k::keybd_event(0x5B, 0, 2, [UIntPtr]::Zero);',
+].join(' ');
+// -EncodedCommand evita i problemi con le virgolette nella riga di comando.
+const COMANDO_WIN_H = Buffer.from(PREMI_WIN_H, 'utf16le').toString('base64');
+
+ipcMain.handle('nkoffice:dettatura-sistema', () => {
+  if (process.platform !== 'win32') throw new Error('Solo su Windows');
+  return new Promise((risolvi, rifiuta) => {
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-EncodedCommand', COMANDO_WIN_H],
+      { windowsHide: true, timeout: 15000 },
+      (errore) => (errore ? rifiuta(errore) : risolvi(true)),
+    );
+  });
 });
 
 app.whenReady().then(() => {
