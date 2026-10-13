@@ -22,6 +22,9 @@ import { selectionRange } from './selection';
 /** Passo di "Aumenta/Riduci rientro" (1,25 cm come in Word italiano). */
 export const INDENT_STEP = cmToPt(1.25);
 
+/** Livello più profondo degli elenchi (0-8, come Word). */
+const MAX_LIST_LEVEL = 8;
+
 export function selectedParagraphs(state: EditorState): Paragraph[] {
   const [start, end] = selectionRange(state);
   return paragraphsBetween(state.doc, start, end).map((l) => l.paragraph);
@@ -115,6 +118,11 @@ export function shiftIndent(state: EditorState, dir: 1 | -1): Transaction | null
   return mapParagraphs(
     state,
     (p) => {
+      // In un elenco Aumenta/Riduci rientro cambiano il livello, come in Word.
+      const list = resolveParaFormat(state.doc.styles, p).list;
+      if (list && (dir > 0 ? list.level < MAX_LIST_LEVEL : list.level > 0)) {
+        return { ...p, format: { ...p.format, list: { ...list, level: list.level + dir } } };
+      }
       const current = resolveParaFormat(state.doc.styles, p).indentLeft ?? 0;
       const steps = current / INDENT_STEP;
       // Tolleranza: rientri arrivati da file (twip, mm) non sono multipli esatti.

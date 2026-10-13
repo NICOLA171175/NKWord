@@ -71,6 +71,22 @@ export function selectionFormats(state: EditorState): CharFormat[] {
   return out.length ? out : [caretFormat(state)];
 }
 
+/**
+ * Formattazione del testo digitato: quella del carattere di riferimento più
+ * la formattazione in attesa, senza le chiavi che tornano allo stile
+ * (es. colore Automatico dopo un testo rosso, grassetto spento).
+ */
+export function typingFormat(
+  sheet: StyleSheet,
+  p: Paragraph,
+  base: CharFormat,
+  pending: CharFormat | undefined,
+  styleId?: string,
+): CharFormat {
+  if (!pending) return base;
+  return prune(sheet, p, { ...base, ...pending }, pending, styleId);
+}
+
 export type CharChange = (effective: CharFormat) => CharFormat;
 
 /** Toglie le chiavi cambiate che coincidono con quanto già dato dallo stile. */
@@ -130,8 +146,9 @@ export function applyCharChangeToRange(
 export function applyCharChange(state: EditorState, change: CharChange, label: string): Transaction {
   const range = targetRange(state);
   if (!range) {
-    const pendingFormat: Mutable<CharFormat> = { ...state.pendingFormat, ...change(caretFormat(state)) };
-    for (const key of Object.keys(pendingFormat) as (keyof CharFormat)[]) if (pendingFormat[key] === undefined) delete pendingFormat[key];
+    // Le chiavi `undefined` restano: "Automatico" deve togliere il colore
+    // anche al testo che si scriverà dopo un carattere colorato.
+    const pendingFormat: CharFormat = { ...state.pendingFormat, ...change(caretFormat(state)) };
     return { state: { ...state, pendingFormat }, meta: { label, addToHistory: false } };
   }
   const doc = applyCharChangeToRange(state.doc, range[0], range[1], change);
@@ -187,8 +204,12 @@ export function shrinkSize(size: number): number {
   return [...FONT_SIZES].reverse().find((s) => s < size)!;
 }
 
-/** Cancella formattazione: toglie formato diretto e stile dai caratteri e riporta i paragrafi allo stile Normale. */
-export function clearFormatting(state: EditorState): Transaction {
+/**
+ * Cancella formattazione: toglie formato diretto e stile dai caratteri e
+ * riporta i paragrafi allo stile Normale. Con `charOnly` (Ctrl+Spazio) i
+ * paragrafi restano come sono. Come in Word l'evidenziazione resta.
+ */
+export function clearFormatting(state: EditorState, charOnly = false): Transaction {
   let [start, end] = selectionRange(state);
   if (isCollapsed(state.selection)) {
     const p = locate(state.doc, start.paragraphId).paragraph;
@@ -201,14 +222,20 @@ export function clearFormatting(state: EditorState): Transaction {
     const to = p.id === end.paragraphId ? end.offset : paragraphLength(p);
     let next = mapFormatInRange(p, from, to, (format) => ({
       format: {
+        ...(format.highlight ? { highlight: format.highlight } : {}),
         ...(format.link ? { link: format.link } : {}),
         ...(format.commentIds ? { commentIds: format.commentIds } : {}),
         ...(format.indexEntry ? { indexEntry: format.indexEntry } : {}),
         ...(format.crossRef ? { crossRef: format.crossRef } : {}),
       },
     }));
-    const { styleId: _s, markFormat: _m, ...rest } = next;
-    next = { ...rest, format: p.format.list ? { list: p.format.list } : {} };
+    if (charOnly) {
+      const { markFormat: _m, ...rest } = next;
+      next = rest;
+    } else {
+      const { styleId: _s, markFormat: _m, ...rest } = next;
+      next = { ...rest, format: p.format.list ? { list: p.format.list } : {} };
+    }
     doc = replaceBlock(doc, p.id, [next]);
   }
   return { state: { doc, selection: state.selection }, meta: { label: 'Cancella formattazione' } };

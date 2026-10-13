@@ -128,7 +128,7 @@ export const RIBBON_ITEMS: readonly UiRibbonItem[] = [
   item('home', 'Paragrafo', 'paragraph.lineSpacing', 'Interlinea', {
     icon: '↕',
     kind: 'dropdown',
-    options: LINE_SPACINGS.map((v) => ({ label: v.toFixed(v % 1 ? 2 : 1).replace(/0$/, ''), args: { lineSpacing: { rule: 'multiple', value: v } } })),
+    options: LINE_SPACINGS.map((v) => ({ label: v.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 2 }), args: { lineSpacing: { rule: 'multiple', value: v } } })),
   }),
   item('home', 'Paragrafo', 'view.toggleFormattingMarks', 'Mostra tutto', { icon: '¶', kind: 'toggle' }),
   item('home', 'Paragrafo', 'paragraph.shading', 'Sfondo', { palette: 'shading', args: { color: null } }),

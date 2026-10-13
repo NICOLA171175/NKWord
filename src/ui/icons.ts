@@ -49,6 +49,11 @@ const ICONS: Record<string, string> = {
   'paragraph.shading':
     S('m4 9 5.5-5.5 6 6L10 15z') + S('M4 9h11.5') + S('M16.5 11.5s1.5 1.7 1.5 2.7a1.5 1.5 0 0 1-3 0c0-1 1.5-2.7 1.5-2.7z') + '<path class="icon-bar icon-bar-shading" d="M2 18.5h16"/>',
   'paragraph.borders': '<rect x="3" y="3" width="14" height="14" stroke-dasharray="1.5 2"/>' + S('M10 3v14M3 10h14').replace('<path', '<path stroke-dasharray="1.5 2"') + S('M2.5 17h15').replace('<path', '<path stroke-width="2"'),
+  'clipboard.paste': '<rect x="4" y="3.5" width="12" height="14" rx="1.5"/>' + S('M7.5 3.5V2.5h5v1M7.5 5h5'),
+  'clipboard.paste:true': '<rect x="4" y="3.5" width="12" height="14" rx="1.5"/>' + S('M7.5 3.5V2.5h5v1M7.5 5h5') + T('A', { y: 15, 'font-size': 8, 'font-weight': 600 }),
+  'clipboard.cut': '<circle cx="6" cy="15" r="2.5"/><circle cx="14" cy="15" r="2.5"/>' + S('M7.5 13 14 2.5M12.5 13 6 2.5'),
+  'clipboard.copy': '<rect x="7" y="6" width="10" height="11.5" rx="1.5"/>' + S('M4.5 13.5h-.5A1.5 1.5 0 0 1 2.5 12V4A1.5 1.5 0 0 1 4 2.5h7A1.5 1.5 0 0 1 12.5 4v.5'),
+  'changeCase.apply': T('Aa', { 'font-size': 11 }),
   'formatPainter.toggle': S('M4 3h10v4H4z') + S('M14 5h2.5v4.5H9.5V12') + S('M8.5 12h2v5.5h-2z'),
   'link.dialog': S('M8.5 11.5a3 3 0 0 0 4.2 0l3-3a3 3 0 0 0-4.2-4.2l-1 1') + S('M11.5 8.5a3 3 0 0 0-4.2 0l-3 3a3 3 0 0 0 4.2 4.2l1-1'),
 
@@ -121,7 +126,7 @@ const ICONS: Record<string, string> = {
   'view.theme': '<circle cx="10" cy="10" r="7"/>' + '<path class="icon-fill" stroke="none" d="M10 3a7 7 0 0 1 0 14z"/>',
 };
 
-const ARG_KEYS = ['align', 'part', 'kind', 'zoom'] as const;
+const ARG_KEYS = ['align', 'part', 'kind', 'zoom', 'textOnly'] as const;
 
 /** Chiave dell'icona: id del comando, più l'argomento che distingue le varianti. */
 export function iconKey(item: Pick<UiRibbonItem, 'commandId' | 'args'> & { readonly label?: string }): string[] {

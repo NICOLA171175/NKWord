@@ -203,7 +203,7 @@ export function defaultKeybindings(mac = isMacPlatform()): Keybinding[] {
     { key: 'Mod-[', commandId: 'format.shrinkFont' },
     { key: 'Mod-Shift-.', commandId: 'format.growFont' },
     { key: 'Mod-Shift-,', commandId: 'format.shrinkFont' },
-    { key: 'Mod-Space', commandId: 'format.clear' },
+    { key: 'Mod-Space', commandId: 'format.clear', args: { charOnly: true } },
 
     // Paragrafo
     { key: 'Mod-l', commandId: 'paragraph.align', args: { align: 'left' } },

@@ -69,7 +69,8 @@ export interface CommandArgs {
   'format.color': { color: string | null };
   'format.highlight': { color: string | null };
   'format.setChar': { format: CharFormat };
-  'format.clear': void;
+  /** `charOnly` (Ctrl+Spazio): solo il formato del carattere, il paragrafo resta. */
+  'format.clear': { charOnly?: boolean } | void;
   'format.link': { url: string | null };
 
   // editing: formattazione paragrafo e stili ---------------------------

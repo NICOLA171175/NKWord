@@ -10,14 +10,17 @@ import {
   paragraphText,
   paragraphs,
   replaceBlock,
+  resolveParaFormat,
   type Block,
   type CharFormat,
   type DocumentModel,
   type EditorState,
   type Inline,
+  type ListRef,
   type Paragraph,
   type Transaction,
 } from '../core';
+import { typingFormat } from './format';
 import { formatAt, inlinesLength, insertInParagraph, splitInlines, textToInlines } from './inlines';
 import { deleteRange, insertBlocksAt, locate, sameContainer, withFreshIds } from './range';
 import { selectionRange, stateOf } from './selection';
@@ -70,7 +73,7 @@ export function insertText(state: EditorState, text: string): Transaction | null
   const refOffset =
     !isCollapsed(state.selection) && start.offset < paragraphLength(original) ? start.offset + 1 : start.offset;
   const base = outsideLink(state, original, start.offset, formatAt(original, refOffset));
-  const format = { ...base.format, ...state.pendingFormat };
+  const format = typingFormat(state.doc.styles, original, base.format, state.pendingFormat, base.styleId);
 
   const { doc, at } = removeSelection(state);
   const p = locate(doc, at.paragraphId).paragraph;
@@ -113,11 +116,21 @@ export function insertInline(state: EditorState, inline: Inline, label: string):
  * prende lo stile "successivo" (es. Titolo 1 → Normale).
  */
 export function splitParagraph(state: EditorState): Transaction {
+  // Invio su una voce di elenco vuota: come Word risale di un livello o chiude l'elenco.
+  if (isCollapsed(state.selection)) {
+    const p = locate(state.doc, state.selection.focus.paragraphId).paragraph;
+    const list = resolveParaFormat(state.doc.styles, p).list;
+    if (list && paragraphLength(p) === 0) {
+      const next = list.level > 0 ? withList(state, p, { ...list, level: list.level - 1 }) : withList(state, p, null);
+      return { state: { ...state, doc: replaceBlock(state.doc, p.id, [next]) }, meta: { label: 'Elenco' } };
+    }
+  }
   const { doc, at } = removeSelection(state);
   const p = locate(doc, at.paragraphId).paragraph;
   const [before, after] = splitInlines(p.children, at.offset);
   const atEnd = at.offset === paragraphLength(p);
-  const markFormat = { ...formatAt(p, at.offset).format, ...state.pendingFormat };
+  const ref = formatAt(p, at.offset);
+  const markFormat = typingFormat(doc.styles, p, ref.format, state.pendingFormat, ref.styleId);
   let second: Paragraph = { ...p, id: newId(), children: after, markFormat };
   if (atEnd && p.styleId) {
     const next = doc.styles.styles[p.styleId]?.next;
@@ -137,6 +150,13 @@ export function splitParagraph(state: EditorState): Transaction {
   return { state: stateOf(out, caret(second.id, 0)), meta: { label: 'Nuovo paragrafo' } };
 }
 
+/** Il paragrafo con un altro riferimento di elenco (`null` = fuori dall'elenco). */
+function withList(state: EditorState, p: Paragraph, list: ListRef | null): Paragraph {
+  const { list: _l, ...format } = p.format;
+  const fromStyle = resolveParaFormat(state.doc.styles, { ...p, format }).list;
+  return { ...p, format: list || fromStyle ? { ...format, list } : format };
+}
+
 function neighbour(doc: DocumentModel, id: string, dir: -1 | 1) {
   const all = [...paragraphs(doc)];
   const i = all.findIndex((l) => l.paragraph.id === id);
@@ -150,6 +170,11 @@ export function deleteBackward(state: EditorState, unit: 'char' | 'word' = 'char
   if (!isCollapsed(state.selection)) return deleteSelection(state);
   const pos = state.selection.focus;
   const p = locate(state.doc, pos.paragraphId).paragraph;
+  // Backspace all'inizio di una voce di elenco toglie il punto elenco o il numero, come in Word.
+  if (pos.offset === 0 && resolveParaFormat(state.doc.styles, p).list) {
+    const doc = replaceBlock(state.doc, p.id, [withList(state, p, null)]);
+    return { state: { ...state, doc }, meta: { label: 'Elenco' } };
+  }
   if (pos.offset > 0) {
     const text = paragraphText(p);
     const from = unit === 'word' ? wordLeft(text, pos.offset) : prevChar(text, pos.offset);

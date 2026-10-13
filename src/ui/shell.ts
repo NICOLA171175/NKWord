@@ -8,7 +8,7 @@ import { ContextMenu, contextMenuItems } from './context-menu';
 import { DocumentView } from './document-view';
 import { viewExtensions } from './extensions';
 import { InputController, runFirstExecutable } from './input';
-import { Keymap, defaultKeybindings } from './keymap';
+import { Keymap, defaultKeybindings, isMacPlatform } from './keymap';
 import { createUiModule, type UiModule } from './module';
 import { Ribbon } from './ribbon';
 import { RIBBON_ITEMS, type UiRibbonItem } from './ribbon-items';
@@ -190,6 +190,13 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
       }
       if (mod && key === 'o') {
         pickFile();
+        return true;
+      }
+      // Ctrl+F e Ctrl+H aprono Trova e Sostituisci (non la ricerca del browser).
+      const findKey = e.code === 'KeyF' ? 'f' : e.code === 'KeyH' ? 'h' : key;
+      if (mod && (isMacPlatform() ? e.metaKey : e.ctrlKey) && (findKey === 'f' || findKey === 'h')) {
+        const item = RIBBON_ITEMS.find((i) => i.tab === 'home' && i.commandId === (findKey === 'f' ? 'edit.find' : 'edit.replace'));
+        if (item) ribbon.invoke(item);
         return true;
       }
       return false;

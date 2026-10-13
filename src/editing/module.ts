@@ -8,7 +8,7 @@ import type { Command, CommandArgs, CommandId, Editor, EditorModule, EditorState
 import { find, replace } from './find';
 import { applyCharChange, applyToggle, clearFormatting, growSize, isToggleActive, setLink, shrinkSize, TOGGLES, MAX_FONT_SIZE, MIN_FONT_SIZE } from './format';
 import { moveCaret, selectAll, setSelection, type LineBounds } from './navigation';
-import { applyStyle, setBorders, setParaFormat, setShading, shiftIndent } from './paragraph';
+import { applyStyle, isAlignActive, setBorders, setParaFormat, setShading, shiftIndent } from './paragraph';
 import { deleteBackward, deleteForward, deleteSelection, insertFragment, insertInline, insertText, splitParagraph } from './text';
 import { isCollapsed } from './selection';
 
@@ -105,13 +105,15 @@ export function editingCommands(lineBounds?: LineBounds): Command<any>[] {
       label: 'Carattere',
       run: ({ state }, a) => applyCharChange(state, () => a.format, 'Carattere'),
     }),
-    cmd('format.clear', { label: 'Cancella formattazione', run: ({ state }) => clearFormatting(state) }),
+    cmd('format.clear', { label: 'Cancella formattazione', run: ({ state }, a) => clearFormatting(state, !!a?.charOnly) }),
     cmd('format.link', { label: 'Collegamento', run: ({ state }, a) => setLink(state, a.url) }),
 
     // Paragrafo e stili --------------------------------------------------
     cmd('paragraph.align', {
       label: 'Allineamento',
-      run: ({ state }, a) => setParaFormat(state, { align: a.align }, 'Allineamento'),
+      // Come in Word, ripetere Centra/Destra/Giustifica riporta il paragrafo a sinistra.
+      run: ({ state }, a) =>
+        setParaFormat(state, { align: a.align !== 'left' && isAlignActive(state, a.align) ? 'left' : a.align }, 'Allineamento'),
     }),
     cmd('paragraph.indent', { label: 'Aumenta rientro', run: ({ state }) => shiftIndent(state, 1) }),
     cmd('paragraph.outdent', { label: 'Riduci rientro', run: ({ state }) => shiftIndent(state, -1) }),

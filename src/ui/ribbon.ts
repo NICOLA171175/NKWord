@@ -11,7 +11,7 @@ import { extensionIsActive, onExtensionsChange } from './extensions';
 import { ColorButton, DEFAULT_COLORS } from './color-picker';
 import { buttonSize, iconSvg } from './icons';
 import { RIBBON_ITEMS, RIBBON_TABS, type RibbonTab, type UiRibbonItem } from './ribbon-items';
-import { charFormatAtCaret, paraFormatAtCaret, styleIdAtCaret } from './selection-format';
+import { commonCharValue, paraFormatAtCaret, styleIdAtCaret } from './selection-format';
 
 export interface RibbonOptions {
   readonly items?: readonly UiRibbonItem[];
@@ -29,6 +29,15 @@ interface Control {
   readonly item: UiRibbonItem;
   readonly element: HTMLButtonElement | HTMLSelectElement;
   readonly palette?: ColorButton;
+}
+
+/** Gruppi che, come in Word, vengono per primi anche se le loro voci arrivano dai moduli. */
+const FIRST_GROUPS: Partial<Record<RibbonTab, readonly string[]>> = { home: ['Annulla', 'Appunti'] };
+
+function orderGroups(items: readonly UiRibbonItem[]): UiRibbonItem[] {
+  const first = FIRST_GROUPS[items[0]?.tab ?? 'home'] ?? [];
+  const rank = (i: UiRibbonItem) => (first.includes(i.group) ? first.indexOf(i.group) : first.length);
+  return [...items].sort((a, b) => rank(a) - rank(b));
 }
 
 export class Ribbon {
@@ -120,7 +129,7 @@ export class Ribbon {
     this.panel.replaceChildren();
     this.controls = [];
     const groups = new Map<string, HTMLElement>();
-    for (const item of this.items.filter((i) => i.tab === this.tab)) {
+    for (const item of orderGroups(this.items.filter((i) => i.tab === this.tab))) {
       let body = groups.get(item.group);
       if (!body) {
         const group = document.createElement('div');
@@ -313,13 +322,21 @@ export class Ribbon {
     let index = -1;
     switch (item.commandId) {
       case 'format.fontFamily': {
-        const f = charFormatAtCaret(state).fontFamily;
+        const f = commonCharValue(state, 'fontFamily');
         index = options.findIndex((o) => (o.args as { fontFamily: string }).fontFamily === f);
         break;
       }
       case 'format.fontSize': {
-        const s = charFormatAtCaret(state).fontSize;
+        const s = commonCharValue(state, 'fontSize');
         index = options.findIndex((o) => (o.args as { fontSize: number }).fontSize === s);
+        break;
+      }
+      case 'paragraph.lineSpacing': {
+        const ls = paraFormatAtCaret(state).lineSpacing;
+        index = options.findIndex((o) => {
+          const want = (o.args as { lineSpacing: { rule: string; value: number } }).lineSpacing;
+          return ls?.rule === want.rule && Math.abs(ls.value - want.value) < 1e-6;
+        });
         break;
       }
       case 'view.zoom':

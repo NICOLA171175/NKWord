@@ -92,7 +92,7 @@ describe('bordi del paragrafo', () => {
     expect(paras(editor).map((p) => p.format.borders)).toEqual([{ left: DEFAULT_BORDER }, { left: DEFAULT_BORDER }]);
   });
 
-  it('Cancella formattazione toglie colori, evidenziatore, sfondo e bordi', () => {
+  it('Cancella formattazione toglie colori, sfondo e bordi ma, come Word, non l\'evidenziatore', () => {
     const p = paragraph([textRun('testo', { color: '#ff0000', highlight: '#ffff00' })], {
       shading: '#d9d9d9',
       borders: { top: DEFAULT_BORDER },
@@ -102,6 +102,6 @@ describe('bordi del paragrafo', () => {
     editor.execute('format.clear');
     const out = paras(editor)[0]!;
     expect(out.format).toEqual({});
-    expect(runs(out)[0]!.format).toEqual({});
+    expect(runs(out)[0]!.format).toEqual({ highlight: '#ffff00' });
   });
 });
