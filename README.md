@@ -2,6 +2,18 @@
 
 Clone di Microsoft Word in TypeScript.
 
+## Avvio con un doppio clic
+
+Serve [Node.js](https://nodejs.org) (versione LTS). Poi, nella cartella del progetto:
+
+- **Windows**: doppio clic su `avvia.bat`.
+- **macOS**: doppio clic su `avvia.command`. La prima volta macOS può bloccarlo: clic destro sul file, *Apri*, poi *Apri* di nuovo.
+- **Linux**: esegui `./avvia.sh`.
+
+La prima volta scarica i pacchetti (qualche minuto), poi apre l'app nel browser. Per chiuderla basta chiudere la finestra nera del terminale.
+
+## Sviluppo
+
 ```bash
 npm install
 npm run typecheck
