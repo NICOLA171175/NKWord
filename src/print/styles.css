@@ -1,0 +1,217 @@
+/* Schermata Stampa (File > Stampa) ------------------------------------- */
+.print-backstage {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  background: #fff;
+  color: #242424;
+  font-size: 13px;
+}
+.print-backstage[hidden] {
+  display: none;
+}
+.print-side {
+  flex: none;
+  width: 300px;
+  max-width: 45vw;
+  overflow: auto;
+  padding: 16px 20px;
+  border-right: 1px solid #e1dfdd;
+  background: #faf9f8;
+}
+.print-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.print-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 400;
+}
+.print-subtitle {
+  margin: 20px 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.print-backstage button,
+.print-backstage select,
+.print-backstage input {
+  font: inherit;
+  color: inherit;
+}
+.print-back {
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+.print-back:hover {
+  background: #edebe9;
+}
+.print-action {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.print-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 84px;
+  padding: 8px 4px;
+  border: 1px solid #c8c6c4;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+.print-button:hover:not(:disabled) {
+  background: #e1effa;
+  border-color: #2b579a;
+}
+.print-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.print-button-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+.print-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 10px;
+}
+.print-action .print-field {
+  margin-bottom: 0;
+}
+.print-field-label {
+  color: #616161;
+}
+.print-field select,
+.print-field input {
+  padding: 4px 6px;
+  border: 1px solid #c8c6c4;
+  border-radius: 3px;
+  background: #fff;
+}
+.print-copies {
+  width: 64px;
+}
+.print-error {
+  margin: -4px 0 10px;
+  color: #a4262c;
+}
+.print-error:empty {
+  display: none;
+}
+.print-summary {
+  margin: 12px 0 0;
+  color: #616161;
+}
+.print-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #e6e6e6;
+}
+.print-sheets {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+}
+.print-sheet {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.print-sheet .print-page {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.18);
+}
+.print-caption {
+  color: #616161;
+  font-size: 12px;
+}
+.print-empty {
+  color: #616161;
+}
+.print-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 4px 16px;
+  border-top: 1px solid #d2d0ce;
+  background: #f3f2f1;
+}
+.print-zoom {
+  width: 140px;
+}
+.print-zoom-label {
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Pagine disegnate (anteprima e stampa) -------------------------------- */
+.print-page {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  background: #fff;
+  color: #000;
+}
+.print-decoration,
+.print-line,
+.print-run {
+  position: absolute;
+}
+.print-run {
+  top: 0;
+  white-space: pre;
+}
+.print-leader {
+  overflow: hidden;
+  direction: rtl;
+}
+
+/* Stampa: solo le pagine scelte ---------------------------------------- */
+.print-output {
+  display: none;
+}
+@media print {
+  body.print-job-active {
+    margin: 0;
+    background: #fff;
+  }
+  body.print-job-active > :not(.print-output) {
+    display: none !important;
+  }
+  body.print-job-active > .print-output {
+    display: block;
+  }
+  .print-output .print-page {
+    break-after: page;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .print-output .print-page:last-child {
+    break-after: auto;
+  }
+}

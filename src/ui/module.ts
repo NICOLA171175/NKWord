@@ -49,12 +49,16 @@ export function createUiModule(options: UiModuleOptions = {}): UiModule {
     },
   };
 
+  let editor: Editor | undefined;
+
   const printCmd: UiCommand<'view.print'> = {
     id: 'view.print',
     label: 'Stampa',
     async: true,
     run: async () => {
-      print();
+      // Con il modulo stampa si apre la sua anteprima (File > Stampa), come in Word.
+      if (editor?.commands.has('print.preview')) await editor.executeAsync('print.preview');
+      else print();
       return null;
     },
   };
@@ -88,9 +92,13 @@ export function createUiModule(options: UiModuleOptions = {}): UiModule {
           return false;
       }
     },
-    activate(editor: Editor) {
-      const disposers = commands.map((c) => editor.commands.register(c));
-      return () => disposers.forEach((d) => d());
+    activate(ed: Editor) {
+      editor = ed;
+      const disposers = commands.map((c) => ed.commands.register(c));
+      return () => {
+        disposers.forEach((d) => d());
+        editor = undefined;
+      };
     },
   };
 }
