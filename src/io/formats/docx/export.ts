@@ -528,7 +528,9 @@ class DocxWriter {
           );
         })
         .join('');
-      abstracts.push(`<w:abstractNum w:abstractNumId="${numId}"><w:multiLevelType w:val="hybridMultilevel"/>${lvls}</w:abstractNum>`);
+      // Un livello che mostra i numeri dei livelli superiori (1.1.1) fa un elenco a più livelli vero.
+      const multi = def.levels.some((l, i) => l.format !== 'bullet' && [...l.text.matchAll(/%(\d)/g)].some((m) => Number(m[1]) !== i + 1));
+      abstracts.push(`<w:abstractNum w:abstractNumId="${numId}"><w:multiLevelType w:val="${multi ? 'multilevel' : 'hybridMultilevel'}"/>${lvls}</w:abstractNum>`);
       nums.push(`<w:num w:numId="${numId}"><w:abstractNumId w:val="${numId}"/></w:num>`);
     }
     return `${XML_DECL}<w:numbering xmlns:w="${NS.w}">${abstracts.join('')}${nums.join('')}</w:numbering>`;

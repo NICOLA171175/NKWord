@@ -1,0 +1,209 @@
+/* Elenchi a più livelli: finestre "Definisci nuovo elenco" e "Imposta valore". */
+
+.multilevel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.multilevel-dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 16px 20px;
+  background: #fff;
+  color: #242424;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  font: 13px 'Segoe UI', system-ui, sans-serif;
+}
+
+.multilevel-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.multilevel-top {
+  display: flex;
+  gap: 14px;
+}
+
+.multilevel-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.multilevel-level {
+  width: 34px;
+  padding: 3px 0;
+  border: 1px solid #d1d1d1;
+  border-radius: 3px;
+  background: #f5f5f5;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.multilevel-level.active {
+  background: #cfe4fa;
+  border-color: #2b88d8;
+  font-weight: 600;
+}
+
+.multilevel-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.multilevel-heading {
+  font-weight: 600;
+}
+
+.multilevel-rows,
+.multilevel-indents {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.multilevel-rows[hidden],
+.multilevel-field[hidden],
+.multilevel-check[hidden] {
+  display: none;
+}
+
+.multilevel-field {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.multilevel-field input,
+.multilevel-field select {
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid #c8c8c8;
+  border-radius: 3px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.multilevel-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.multilevel-preview-title {
+  margin: 14px 0 4px;
+  font-weight: 600;
+}
+
+.multilevel-preview {
+  padding: 8px 10px;
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  background: #fff;
+  color: #242424;
+}
+
+.multilevel-preview-row {
+  display: flex;
+  align-items: center;
+  height: 17px;
+  color: #8a8a8a;
+}
+
+.multilevel-preview-row.current {
+  color: #242424;
+  font-weight: 600;
+}
+
+.multilevel-preview-mark {
+  flex: none;
+  padding-right: 6px;
+  font: 12px 'Calibri', 'Segoe UI', sans-serif;
+  white-space: nowrap;
+}
+
+.multilevel-preview-line {
+  flex: 1;
+  height: 2px;
+  background: #c8c8c8;
+}
+
+.multilevel-preview-row.current .multilevel-preview-line {
+  background: #8a8a8a;
+}
+
+.multilevel-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.multilevel-buttons button {
+  min-width: 80px;
+  padding: 5px 12px;
+  border: 1px solid #c8c8c8;
+  border-radius: 3px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.multilevel-buttons .multilevel-ok {
+  background: #2b579a;
+  border-color: #2b579a;
+  color: #fff;
+}
+
+/* Tema scuro (vedi src/theme): la finestra si scurisce, l'anteprima resta un foglio bianco come in Word. */
+@media screen {
+  :root[data-theme='dark'] .multilevel-backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  :root[data-theme='dark'] .multilevel-dialog {
+    background: var(--ribbon-bg);
+    color: var(--text);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  }
+
+  :root[data-theme='dark'] .multilevel-field input,
+  :root[data-theme='dark'] .multilevel-field select {
+    background: #1f1f1f;
+    color: var(--text);
+    border-color: #555;
+  }
+
+  :root[data-theme='dark'] .multilevel-level,
+  :root[data-theme='dark'] .multilevel-buttons button {
+    background: #383838;
+    border-color: #555;
+    color: var(--text);
+  }
+
+  :root[data-theme='dark'] .multilevel-level.active {
+    background: var(--pressed);
+    border-color: var(--pressed-border);
+  }
+
+  :root[data-theme='dark'] .multilevel-buttons .multilevel-ok {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #111;
+  }
+}

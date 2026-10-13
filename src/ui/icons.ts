@@ -62,6 +62,8 @@ const ICONS: Record<string, string> = {
     S('M8 5h9M8 10h9M8 15h9'),
   'list.toggleNumbered':
     T('1', { x: 4, y: 7, 'font-size': 6 }) + T('2', { x: 4, y: 12, 'font-size': 6 }) + T('3', { x: 4, y: 17, 'font-size': 6 }) + S('M8 5h9M8 10h9M8 15h9'),
+  'multilevel.menu':
+    T('1', { x: 3.5, y: 6.5, 'font-size': 5.5 }) + T('a', { x: 7, y: 11.5, 'font-size': 5.5 }) + T('i', { x: 10.5, y: 16.5, 'font-size': 5.5 }) + S('M6 4.5h11M9.5 9.5h7.5M13 14.5h4'),
   'paragraph.outdent': S('M3 4h14M9 8h8M9 12h8M3 16h14') + S('M6 7.5 3.5 10 6 12.5'),
   'paragraph.indent': S('M3 4h14M9 8h8M9 12h8M3 16h14') + S('M3.5 7.5 6 10l-2.5 2.5'),
   'paragraph.align:left': LINES([[3, 17], [3, 12], [3, 17], [3, 12]]),

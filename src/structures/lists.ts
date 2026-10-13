@@ -115,6 +115,15 @@ function inList(state: EditorState): boolean {
   return selectedParagraphs(state).some((l) => !!l.paragraph.format.list);
 }
 
+/**
+ * Tab cambia livello solo all'inizio della voce o con più paragrafi
+ * selezionati, come in Word; in mezzo al testo inserisce una tabulazione.
+ */
+function atItemStart(state: EditorState): boolean {
+  const { anchor, focus } = state.selection;
+  return anchor.paragraphId !== focus.paragraphId || Math.min(anchor.offset, focus.offset) === 0;
+}
+
 export const listCommands = [
   defineCommand('list.toggleBullet', {
     label: 'Elenco puntato',
@@ -137,7 +146,7 @@ export const listCommands = [
   }),
   defineCommand('list.increaseLevel', {
     label: 'Aumenta livello elenco',
-    isEnabled: ({ state }) => inList(state),
+    isEnabled: ({ state }) => inList(state) && atItemStart(state),
     run: ({ state }) => {
       const next = changeLevel(state, 1);
       return next && { state: next, meta: { label: 'Aumenta livello elenco' } };
