@@ -2,6 +2,17 @@
 
 Clone di Microsoft Word in TypeScript.
 
+## Programma da installare (senza Node.js)
+
+Scarica dalla pagina [Release "ultima versione"](https://github.com/NICOLA171175/nikoffice/releases/latest):
+
+- **Windows, installazione**: [`nikoffice-installa.exe`](https://github.com/NICOLA171175/nikoffice/releases/latest/download/nikoffice-installa.exe). Crea il collegamento sul desktop e nel menu Start; si disinstalla da *Impostazioni > App*.
+- **Windows, senza installare**: [`nikoffice-portable.exe`](https://github.com/NICOLA171175/nikoffice/releases/latest/download/nikoffice-portable.exe). Doppio clic e parte, anche da chiavetta USB.
+- **Mac**: [`nikoffice-mac.dmg`](https://github.com/NICOLA171175/nikoffice/releases/latest/download/nikoffice-mac.dmg). Aprilo e trascina nikoffice in *Applicazioni*; la prima volta clic destro sull'app, *Apri*.
+
+Il programma non è firmato digitalmente: Windows può mostrare l'avviso SmartScreen, clicca *Ulteriori informazioni* e poi *Esegui comunque*.
+I file vengono ricostruiti in automatico (GitHub Action "Programma desktop") a ogni modifica su `main`; il codice del pacchetto è nella cartella `desktop/` (Electron + electron-builder).
+
 ## Avvio con un doppio clic
 
 Serve [Node.js](https://nodejs.org) 22.12 o più recente (versione LTS). Poi, nella cartella del progetto:

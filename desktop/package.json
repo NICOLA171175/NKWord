@@ -1,0 +1,65 @@
+{
+  "name": "nikoffice",
+  "productName": "nikoffice",
+  "version": "0.1.0",
+  "description": "Clone di Microsoft Word in TypeScript",
+  "author": "Nicola",
+  "private": true,
+  "repository": "github:NICOLA171175/nikoffice",
+  "main": "main.cjs",
+  "scripts": {
+    "app": "cd .. && npx vite build --base=./ --outDir desktop/app --emptyOutDir",
+    "start": "npm run app && electron .",
+    "dist:win": "npm run app && electron-builder --win --publish never",
+    "dist:mac": "npm run app && electron-builder --mac --publish never"
+  },
+  "build": {
+    "appId": "it.nikoffice.app",
+    "productName": "nikoffice",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.cjs",
+      "app/**",
+      "build/icon.png"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "nikoffice",
+      "artifactName": "nikoffice-installa.${ext}"
+    },
+    "portable": {
+      "artifactName": "nikoffice-portable.${ext}"
+    },
+    "mac": {
+      "icon": "build/icon.png",
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "artifactName": "nikoffice-mac.${ext}"
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3"
+  }
+}

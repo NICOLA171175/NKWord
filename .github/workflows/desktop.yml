@@ -1,0 +1,78 @@
+# Costruisce il programma installabile (Windows e Mac) e, a ogni modifica su main,
+# lo pubblica nella Release "ultima-versione" del repository.
+name: Programma desktop
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: win
+          - os: macos-latest
+            target: mac
+    runs-on: ${{ matrix.os }}
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            desktop/package-lock.json
+      - run: npm ci
+      - run: npm ci
+        working-directory: desktop
+      - run: npm run dist:${{ matrix.target }}
+        working-directory: desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nikoffice-${{ matrix.target }}
+          path: |
+            desktop/release/*.exe
+            desktop/release/*.dmg
+          if-no-files-found: error
+
+  pubblica:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: file
+          merge-multiple: true
+      - name: Aggiorna la Release "ultima-versione"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ls -la file
+          gh release delete ultima-versione --cleanup-tag --yes || true
+          gh release create ultima-versione file/* \
+            --target "${{ github.sha }}" \
+            --title "nikoffice - ultima versione" \
+            --latest \
+            --notes "Programma pronto da installare, aggiornato automaticamente a ogni modifica.
+
+          **Windows**
+          - nikoffice-installa.exe: installa nikoffice come un normale programma (collegamento sul desktop e nel menu Start).
+          - nikoffice-portable.exe: si avvia con un doppio clic, senza installare nulla (va bene anche da una chiavetta USB).
+
+          **Mac**
+          - nikoffice-mac.dmg: apri il file e trascina nikoffice nella cartella Applicazioni.
+
+          Il programma non è firmato digitalmente: al primo avvio Windows può mostrare l'avviso SmartScreen. Clicca \"Ulteriori informazioni\" e poi \"Esegui comunque\"."
