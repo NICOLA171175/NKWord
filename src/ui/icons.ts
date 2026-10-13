@@ -123,6 +123,7 @@ const ICONS: Record<string, string> = {
 
   'view.zoom': '<circle cx="8.5" cy="8.5" r="5"/>' + S('m12.5 12.5 5 5M6.5 8.5h4M8.5 6.5v4'),
   'view.zoom:1': T('1:1', { 'font-size': 9, 'font-weight': 600 }),
+  'readmode.open': S('M10 5.5C8.5 4 6 3.5 2.5 4v11.5c3.5-.5 6 0 7.5 1.5 1.5-1.5 4-2 7.5-1.5V4c-3.5-.5-6 0-7.5 1.5z') + S('M10 5.5V17'),
   'view.theme': '<circle cx="10" cy="10" r="7"/>' + '<path class="icon-fill" stroke="none" d="M10 3a7 7 0 0 1 0 14z"/>',
 };
 
@@ -183,6 +184,7 @@ const LARGE = new Set([
   'view.toggleFormattingMarks',
   'view.zoom',
   'view.theme',
+  'readmode.open',
 ]);
 
 /** Gruppi della scheda Home dove, come in Word, i pulsanti mostrano solo l'icona. */

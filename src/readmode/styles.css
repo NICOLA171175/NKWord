@@ -1,0 +1,210 @@
+/*
+ * Modalità lettura (vedi view.ts). I colori della cornice vengono dalle
+ * variabili dell'interfaccia, quindi seguono il tema chiaro o scuro; il
+ * foglio resta bianco, a meno di scegliere Seppia o Inverso.
+ */
+
+.readmode {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  background: var(--canvas, #e9e9e9);
+  color: var(--text, #242424);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  outline: none;
+}
+.readmode[hidden] {
+  display: none;
+}
+
+/* Barre ------------------------------------------------------------------ */
+
+.readmode-top,
+.readmode-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 4px 10px;
+  background: var(--chrome, #f3f3f3);
+  font-size: 13px;
+}
+.readmode-top {
+  border-bottom: 1px solid var(--ribbon-border, #e1dfdd);
+}
+.readmode-bottom {
+  justify-content: space-between;
+  border-top: 1px solid var(--ribbon-border, #e1dfdd);
+}
+.readmode-title {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.readmode button {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius, 4px);
+  cursor: pointer;
+}
+.readmode button:hover:not(:disabled) {
+  background: var(--hover, #f0f0f0);
+}
+.readmode button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.readmode-menu-button,
+.readmode-close {
+  padding: 4px 10px;
+}
+.readmode-close {
+  font-size: 15px;
+}
+.readmode-zoom-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.readmode-zoom-button {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+}
+.readmode-zoom {
+  width: 110px;
+  accent-color: var(--accent, #185abd);
+}
+.readmode-zoom-label {
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Menu Visualizza ---------------------------------------------------------- */
+
+.readmode-menu {
+  position: absolute;
+  top: 36px;
+  left: 10px;
+  z-index: 2;
+  min-width: 220px;
+  padding: 4px 0;
+  background: var(--ribbon-bg, #fff);
+  border: 1px solid var(--ribbon-border, #e1dfdd);
+  border-radius: var(--radius, 4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+.readmode-menu[hidden] {
+  display: none;
+}
+.readmode-menu-heading {
+  padding: 8px 12px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted, #616161);
+}
+.readmode .readmode-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 5px 12px;
+  border-radius: 0;
+  text-align: left;
+}
+.readmode-check {
+  width: 20px;
+  flex: none;
+}
+
+/* Pagine ------------------------------------------------------------------ */
+
+.readmode-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.readmode-pages {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 24px 56px;
+  min-width: min-content;
+}
+.readmode[data-layout='scroll'] .readmode-pages {
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+}
+.readmode-empty {
+  margin-top: 40px;
+  color: var(--muted, #616161);
+}
+.readmode-arrow {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 64px;
+  font-size: 36px !important;
+  line-height: 1;
+  color: var(--muted, #616161) !important;
+}
+.readmode-arrow-prev {
+  left: 8px;
+}
+.readmode-arrow-next {
+  right: 8px;
+}
+.readmode[data-layout='scroll'] .readmode-arrow {
+  display: none;
+}
+
+/* Le pagine sono disegnate come in Stampa (src/print/render.ts). */
+.readmode .print-page {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  background: #fff;
+  color: #000;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.18);
+}
+.readmode .print-decoration,
+.readmode .print-line,
+.readmode .print-run {
+  position: absolute;
+}
+.readmode .print-run {
+  top: 0;
+  white-space: pre;
+}
+.readmode .print-leader {
+  overflow: hidden;
+  direction: rtl;
+}
+
+/* Colore pagina: seppia, o inverso (testo chiaro su fondo nero). */
+.readmode[data-page-color='sepia'] .print-page {
+  background: #f4ecd8;
+}
+.readmode[data-page-color='sepia'] .print-run {
+  color: #5b4636 !important;
+}
+.readmode[data-page-color='inverse'] .print-page {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Forme e grafici si vedono ma non si spostano. */
+.readmode .drawing {
+  pointer-events: none;
+}

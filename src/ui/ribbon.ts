@@ -32,7 +32,7 @@ interface Control {
 }
 
 /** Gruppi che, come in Word, vengono per primi anche se le loro voci arrivano dai moduli. */
-const FIRST_GROUPS: Partial<Record<RibbonTab, readonly string[]>> = { home: ['Annulla', 'Appunti'] };
+const FIRST_GROUPS: Partial<Record<RibbonTab, readonly string[]>> = { home: ['Annulla', 'Appunti'], view: ['Visualizzazioni'] };
 
 function orderGroups(items: readonly UiRibbonItem[]): UiRibbonItem[] {
   const first = FIRST_GROUPS[items[0]?.tab ?? 'home'] ?? [];
