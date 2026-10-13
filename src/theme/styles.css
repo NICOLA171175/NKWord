@@ -1,0 +1,319 @@
+/*
+ * Tema scuro dell'interfaccia (vedi module.ts). Si applica quando <html> ha
+ * data-theme="dark". Barra, menu, riquadri e finestre diventano scuri; il
+ * foglio del documento resta bianco, come in Word. Solo a schermo: la
+ * stampa non cambia.
+ */
+
+@media screen {
+  :root[data-theme='dark'] {
+    --accent: #6ea8fe;
+    --accent-dark: #4f8fe6;
+    --accent-soft: #233650;
+    --title-bg: #1b1b1b;
+    --chrome: #252525;
+    --ribbon-bg: #2f2f2f;
+    --ribbon-border: #454545;
+    --canvas: #1b1b1b;
+    --text: #e6e6e6;
+    --muted: #a8a8a8;
+    --icon: #d6d6d6;
+    --hover: #3d3d3d;
+    --pressed: #26446e;
+    --pressed-border: #4b78b8;
+    --comment-mark: #fbe9a6;
+    color-scheme: dark;
+  }
+
+  /* Il foglio resta bianco: il testo del documento torna scuro. */
+  :root[data-theme='dark'] .page,
+  :root[data-theme='dark'] .input-sink.composing {
+    color: #000;
+  }
+
+  /* Barra del titolo e barra multifunzione ------------------------------ */
+
+  :root[data-theme='dark'] .title-bar::before {
+    background: var(--accent);
+    color: #111;
+  }
+
+  :root[data-theme='dark'] .ribbon-tab:hover,
+  :root[data-theme='dark'] .ribbon-button:active:not(:disabled),
+  :root[data-theme='dark'] .status-pages:hover,
+  :root[data-theme='dark'] .status-words:hover,
+  :root[data-theme='dark'] .status-zoom-button:hover {
+    background: var(--hover);
+  }
+
+  :root[data-theme='dark'] .ribbon-select,
+  :root[data-theme='dark'] .ribbon-style,
+  :root[data-theme='dark'] .hf-bar button {
+    background: #1f1f1f;
+    border-color: #555;
+  }
+
+  :root[data-theme='dark'] .ribbon-select:hover:not(:disabled) {
+    border-color: #888;
+  }
+
+  :root[data-theme='dark'] .ribbon-style-preview[data-style='Heading1'],
+  :root[data-theme='dark'] .ribbon-style-preview[data-style='Heading2'] {
+    color: #8fb4f0;
+  }
+
+  :root[data-theme='dark'] .ribbon-style-preview[data-style='Heading3'] {
+    color: #a9c4ef;
+  }
+
+  :root[data-theme='dark'] .hf-bar {
+    border-bottom-color: #34507a;
+  }
+
+  :root[data-theme='dark'] .hf-bar button:hover {
+    color: #111;
+  }
+
+  :root[data-theme='dark'] .ribbon-panel,
+  :root[data-theme='dark'] .page {
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.4),
+      0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Menu ------------------------------------------------------------------ */
+
+  :root[data-theme='dark'] .context-menu,
+  :root[data-theme='dark'] .color-menu {
+    background: var(--ribbon-bg);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+  }
+
+  :root[data-theme='dark'] .color-swatch,
+  :root[data-theme='dark'] .color-menu-sample {
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  :root[data-theme='dark'] .color-menu-sample--none {
+    background:
+      linear-gradient(to top left, transparent 46%, #d13438 46%, #d13438 54%, transparent 54%),
+      #fff;
+  }
+
+  /* Commenti --------------------------------------------------------------- */
+
+  :root[data-theme='dark'] .comment-card {
+    background: var(--ribbon-bg);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
+  :root[data-theme='dark'] .comment-input {
+    background: #1f1f1f;
+    color: var(--text);
+    border-color: #555;
+  }
+
+  :root[data-theme='dark'] .comment-button.primary {
+    color: #111;
+  }
+
+  /* Salvataggio automatico ------------------------------------------------- */
+
+  :root[data-theme='dark'] .autosave-banner {
+    background: #4a3f12;
+    border-bottom-color: #806b1c;
+    color: #f3e7b8;
+  }
+
+  :root[data-theme='dark'] .autosave-date {
+    color: #d8cc9c;
+  }
+
+  :root[data-theme='dark'] .autosave-banner button {
+    background: #2f2f2f;
+    border-color: #777;
+    color: var(--text);
+  }
+
+  :root[data-theme='dark'] .autosave-banner button.autosave-restore {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #111;
+  }
+
+  /* Finestre: forme e grafici, collegamenti, correzione automatica -------- */
+
+  :root[data-theme='dark'] .drawing-dialog,
+  :root[data-theme='dark'] .link-dialog,
+  :root[data-theme='dark'] .autocorrect-dialog {
+    background: var(--ribbon-bg);
+    color: var(--text);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+  }
+
+  :root[data-theme='dark'] .drawing-dialog-backdrop,
+  :root[data-theme='dark'] .link-dialog-backdrop,
+  :root[data-theme='dark'] .autocorrect-backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  :root[data-theme='dark'] .drawing-dialog input,
+  :root[data-theme='dark'] .drawing-dialog select,
+  :root[data-theme='dark'] .link-dialog input,
+  :root[data-theme='dark'] .link-dialog select,
+  :root[data-theme='dark'] .autocorrect-dialog input,
+  :root[data-theme='dark'] .autocorrect-dialog select {
+    background: #1f1f1f;
+    color: var(--text);
+    border-color: #555;
+  }
+
+  :root[data-theme='dark'] .chart-editor-grid td {
+    border-color: #555;
+  }
+
+  :root[data-theme='dark'] .chart-editor-grid .chart-editor-series,
+  :root[data-theme='dark'] .chart-editor-grid .chart-editor-category {
+    background: #383838;
+  }
+
+  :root[data-theme='dark'] .chart-editor-grid .chart-editor-corner {
+    background: #424242;
+  }
+
+  :root[data-theme='dark'] .link-dialog-kind,
+  :root[data-theme='dark'] .autocorrect-btn {
+    background: #383838;
+    border-color: #555;
+    color: var(--text);
+  }
+
+  :root[data-theme='dark'] .link-dialog-kind.active {
+    background: var(--pressed);
+    border-color: var(--pressed-border);
+  }
+
+  :root[data-theme='dark'] .autocorrect-list {
+    border-color: #555;
+  }
+
+  :root[data-theme='dark'] .link-dialog-error {
+    color: #ff8a8a;
+  }
+
+  :root[data-theme='dark'] .drawing-dialog-ok,
+  :root[data-theme='dark'] .link-dialog-ok,
+  :root[data-theme='dark'] .autocorrect-btn.primary,
+  :root[data-theme='dark'] .symbols-insert {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #111 !important;
+  }
+
+  /* Documenti recenti e Simbolo ------------------------------------------- */
+
+  :root[data-theme='dark'] .recent-panel,
+  :root[data-theme='dark'] .symbols-panel {
+    background: var(--ribbon-bg);
+    border-color: #555;
+    color: var(--text);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+  }
+
+  :root[data-theme='dark'] .recent-empty,
+  :root[data-theme='dark'] .recent-where,
+  :root[data-theme='dark'] .recent-remove,
+  :root[data-theme='dark'] .recent-close,
+  :root[data-theme='dark'] .symbols-close,
+  :root[data-theme='dark'] .symbols-title,
+  :root[data-theme='dark'] .symbols-pick,
+  :root[data-theme='dark'] .symbols-code {
+    color: var(--muted);
+  }
+
+  :root[data-theme='dark'] .recent-item:hover,
+  :root[data-theme='dark'] .recent-remove:hover,
+  :root[data-theme='dark'] .recent-close:hover,
+  :root[data-theme='dark'] .symbols-close:hover {
+    background: var(--hover);
+  }
+
+  :root[data-theme='dark'] .recent-clear {
+    color: var(--accent) !important;
+  }
+
+  :root[data-theme='dark'] .symbols-grid {
+    border-color: #4a4a4a;
+  }
+
+  :root[data-theme='dark'] .symbols-cell {
+    background: #262626;
+    border-color: #4a4a4a;
+    color: var(--text);
+  }
+
+  :root[data-theme='dark'] .symbols-cell:hover,
+  :root[data-theme='dark'] .symbols-cell:focus-visible {
+    background: var(--pressed);
+  }
+
+  :root[data-theme='dark'] .symbols-preview {
+    border-color: #555;
+    background: #262626;
+  }
+
+  :root[data-theme='dark'] .symbols-insert:disabled {
+    background: #555;
+    border-color: #555;
+    color: #999 !important;
+  }
+
+  /* Anteprima di stampa: il riquadro è scuro, i fogli restano bianchi ----- */
+
+  :root[data-theme='dark'] .print-backstage {
+    background: var(--ribbon-bg);
+    color: var(--text);
+  }
+
+  :root[data-theme='dark'] .print-side {
+    background: var(--chrome);
+    border-right-color: var(--ribbon-border);
+  }
+
+  :root[data-theme='dark'] .print-back:hover {
+    background: var(--hover);
+  }
+
+  :root[data-theme='dark'] .print-button,
+  :root[data-theme='dark'] .print-field select,
+  :root[data-theme='dark'] .print-field input {
+    background: #1f1f1f;
+    border-color: #555;
+    color: var(--text);
+  }
+
+  :root[data-theme='dark'] .print-button:hover:not(:disabled) {
+    background: var(--pressed);
+    border-color: var(--pressed-border);
+  }
+
+  :root[data-theme='dark'] .print-field-label,
+  :root[data-theme='dark'] .print-summary,
+  :root[data-theme='dark'] .print-caption,
+  :root[data-theme='dark'] .print-empty {
+    color: var(--muted);
+  }
+
+  :root[data-theme='dark'] .print-error {
+    color: #ff8a8a;
+  }
+
+  :root[data-theme='dark'] .print-main {
+    background: var(--canvas);
+  }
+
+  :root[data-theme='dark'] .print-bar {
+    background: var(--chrome);
+    border-top-color: var(--ribbon-border);
+  }
+}

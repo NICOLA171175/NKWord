@@ -115,6 +115,7 @@ const ICONS: Record<string, string> = {
 
   'view.zoom': '<circle cx="8.5" cy="8.5" r="5"/>' + S('m12.5 12.5 5 5M6.5 8.5h4M8.5 6.5v4'),
   'view.zoom:1': T('1:1', { 'font-size': 9, 'font-weight': 600 }),
+  'view.theme': '<circle cx="10" cy="10" r="7"/>' + '<path class="icon-fill" stroke="none" d="M10 3a7 7 0 0 1 0 14z"/>',
 };
 
 const ARG_KEYS = ['align', 'part', 'kind', 'zoom'] as const;
@@ -172,6 +173,7 @@ const LARGE = new Set([
   'spelling.next',
   'view.toggleFormattingMarks',
   'view.zoom',
+  'view.theme',
 ]);
 
 /** Gruppi della scheda Home dove, come in Word, i pulsanti mostrano solo l'icona. */
