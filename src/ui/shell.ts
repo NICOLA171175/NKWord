@@ -75,7 +75,7 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.hidden = true;
-  fileInput.accept = '.docx,.html,.htm,.txt,.md';
+  fileInput.accept = '.docx,.html,.htm,.txt,.md,.pdf';
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
     fileInput.value = '';

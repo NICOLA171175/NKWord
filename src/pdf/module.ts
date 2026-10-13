@@ -1,7 +1,8 @@
 /**
  * Modulo PDF: aggiunge il formato 'pdf' al registro dei formati del modulo
  * io, così `file.export` con `{ formatId: 'pdf' }` salva il documento come
- * PDF impaginato come a schermo. Non registra comandi propri.
+ * PDF impaginato come a schermo e `file.open` apre un PDF ricostruendo
+ * paragrafi, formattazione e immagini. Non registra comandi propri.
  */
 
 import type { EditorModule } from '../core';

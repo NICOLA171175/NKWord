@@ -1,6 +1,7 @@
 import type { DocumentFormat, DocumentModel, LayoutEngine, TextMeasurer } from '../core';
 import { createApproxMeasurer, createCanvasMeasurer, createLayoutEngine } from '../layout';
 import type { ImageRasterizer } from './images';
+import { importPdf } from './import';
 import { layoutToPdf } from './render';
 
 export interface PdfFormatOptions {
@@ -26,7 +27,7 @@ export function defaultMeasurer(): TextMeasurer {
   return createApproxMeasurer();
 }
 
-/** Formato PDF, solo esportazione. */
+/** Formato PDF: salvataggio impaginato e apertura approssimata (vedi `importPdf`). */
 export function createPdfFormat(options: PdfFormatOptions = {}): DocumentFormat {
   let measurer = options.measurer;
   let fallback: LayoutEngine | undefined;
@@ -36,6 +37,7 @@ export function createPdfFormat(options: PdfFormatOptions = {}): DocumentFormat 
     label: 'PDF',
     extensions: ['pdf'],
     mimeType: 'application/pdf',
+    import: (data) => importPdf(data),
     async export(doc: DocumentModel) {
       const engine = options.layout?.() ?? (fallback ??= createLayoutEngine(getMeasurer()));
       return layoutToPdf(engine.layout(doc), { measurer: getMeasurer(), rasterize: options.rasterize, now: options.now });

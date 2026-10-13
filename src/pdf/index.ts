@@ -3,3 +3,4 @@ export { createPdfFormat, defaultMeasurer, type PdfFormatOptions } from './forma
 export { layoutToPdf, type PdfRenderOptions } from './render';
 export { browserRasterizer, loadImage, type ImageRasterizer, type PdfImage } from './images';
 export { encodeWinAnsi, familyFor, standardFont } from './fonts';
+export { importPdf, encodePng, fontFamilyFromPdfName, type PdfImportOptions } from './import';
