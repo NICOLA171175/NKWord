@@ -196,7 +196,10 @@ describe('DOCX: lettura di file di Word', () => {
   it('legge campi complessi, collegamenti e revisioni', async () => {
     const doc = await importDocx(await wordLikeDocx());
     const p = plainParagraphs(doc)[2]!;
-    expect(paragraphText(p)).toBe('Pagina ￼ vedi sito aggiunto rel');
+    // Le revisioni restano in attesa: il testo eliminato c'è, segnato come tale.
+    expect(paragraphText(p)).toBe('Pagina ￼ vedi sito aggiuntotolto rel');
+    expect(runs(p).find((r) => r.text === ' aggiunto')!.revision).toEqual({ kind: 'insert', author: 'x' });
+    expect(runs(p).find((r) => r.text === 'tolto')!.revision).toEqual({ kind: 'delete', author: 'x' });
     expect(p.children[1]).toMatchObject({ type: 'field', kind: 'page' });
     const sito = runs(p).find((r) => r.text === 'sito')!;
     expect(sito.format.link).toBe('https://nik.it');

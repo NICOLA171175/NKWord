@@ -99,6 +99,21 @@ export interface ParaFormat {
 }
 
 // ---------------------------------------------------------------------------
+// Revisioni
+
+/**
+ * Revisione del rilevamento modifiche: il contenuto che la porta è stato
+ * inserito o eliminato da `author` ed è in attesa di essere accettato o
+ * rifiutato. Il testo eliminato resta nel modello finché non si accetta.
+ */
+export interface Revision {
+  readonly kind: 'insert' | 'delete';
+  readonly author: string;
+  /** Data ISO 8601. */
+  readonly date?: string;
+}
+
+// ---------------------------------------------------------------------------
 // Contenuto in linea
 
 export interface TextRun {
@@ -107,6 +122,8 @@ export interface TextRun {
   readonly text: string;
   readonly format: CharFormat;
   readonly styleId?: Id;
+  /** Revisione in attesa (rilevamento modifiche). */
+  readonly revision?: Revision;
 }
 
 export interface ImageInline {
@@ -116,15 +133,21 @@ export interface ImageInline {
   readonly width: Points;
   readonly height: Points;
   readonly alt?: string;
+  /** Revisione in attesa (rilevamento modifiche). */
+  readonly revision?: Revision;
 }
 
 export interface BreakInline {
   readonly type: 'break';
   readonly kind: 'line' | 'page' | 'column';
+  /** Revisione in attesa (rilevamento modifiche). */
+  readonly revision?: Revision;
 }
 
 export interface TabInline {
   readonly type: 'tab';
+  /** Revisione in attesa (rilevamento modifiche). */
+  readonly revision?: Revision;
 }
 
 export type FieldKind = 'page' | 'numPages' | 'date' | 'time';
@@ -134,6 +157,8 @@ export interface FieldInline {
   readonly type: 'field';
   readonly kind: FieldKind;
   readonly format: CharFormat;
+  /** Revisione in attesa (rilevamento modifiche). */
+  readonly revision?: Revision;
 }
 
 export type Inline = TextRun | ImageInline | BreakInline | TabInline | FieldInline;
@@ -150,6 +175,8 @@ export interface Paragraph {
   readonly children: readonly Inline[];
   /** Formattazione del segno di paragrafo (usata per il cursore su riga vuota). */
   readonly markFormat?: CharFormat;
+  /** Revisione del segno di paragrafo: eliminarlo unisce il paragrafo al successivo. */
+  readonly revision?: Revision;
 }
 
 export interface TableCellFormat {

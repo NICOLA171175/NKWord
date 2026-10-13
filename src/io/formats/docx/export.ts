@@ -18,6 +18,7 @@ import {
   type Inline,
   type ParaFormat,
   type Paragraph,
+  type Revision,
   type Section,
   type Style,
   type Table,
@@ -116,6 +117,7 @@ class DocxWriter {
   private headerCount = 0;
   private footerCount = 0;
   private usesEvenHeaders = false;
+  private revisionId = 0;
   private readonly anchors: ReadonlySet<string>;
   private bookmarkId = 0;
 
@@ -133,7 +135,17 @@ class DocxWriter {
   // -------------------------------------------------------------------------
   // Paragrafi e run
 
-  paraFormatXml(f: ParaFormat, styleId: string | undefined, mark?: CharFormat, sectPr = ''): string {
+  /** Attributi di `w:ins`/`w:del`. */
+  private revisionAttrs(r: Revision): string {
+    const date = r.date ? ` w:date="${escapeAttr(r.date)}"` : '';
+    return `w:id="${++this.revisionId}" w:author="${escapeAttr(r.author)}"${date}`;
+  }
+
+  private revisionTag(r: Revision): string {
+    return r.kind === 'insert' ? 'w:ins' : 'w:del';
+  }
+
+  paraFormatXml(f: ParaFormat, styleId: string | undefined, mark?: CharFormat, sectPr = '', markRevision?: Revision): string {
     const p: string[] = [];
     if (styleId) p.push(val('pStyle', styleId));
     p.push(toggle('keepNext', f.keepWithNext), toggle('keepLines', f.keepLinesTogether), toggle('pageBreakBefore', f.pageBreakBefore), toggle('widowControl', f.widowControl));
@@ -168,7 +180,12 @@ class DocxWriter {
     if (ind.length) p.push(`<w:ind ${ind.join(' ')}/>`);
     if (f.align) p.push(val('jc', JC_TO_DOCX[f.align]));
     if (f.outlineLevel) p.push(val('outlineLvl', f.outlineLevel - 1));
-    if (mark) p.push(charFormatXml(mark));
+    if (markRevision) {
+      // Il segno di paragrafo revisionato: w:ins/w:del vanno all'inizio di w:rPr.
+      const rPr = charFormatXml(mark ?? {});
+      const rev = `<${this.revisionTag(markRevision)} ${this.revisionAttrs(markRevision)}/>`;
+      p.push(rPr ? rPr.replace('<w:rPr>', `<w:rPr>${rev}`) : `<w:rPr>${rev}</w:rPr>`);
+    } else if (mark) p.push(charFormatXml(mark));
     p.push(sectPr);
     const inner = p.join('');
     return inner ? `<w:pPr>${inner}</w:pPr>` : '';
@@ -202,7 +219,8 @@ class DocxWriter {
     switch (inline.type) {
       case 'text': {
         const { link: _link, ...format } = inline.format;
-        return `<w:r>${charFormatXml(format, inline.styleId)}<w:t xml:space="preserve">${escapeText(inline.text)}</w:t></w:r>`;
+        const t = inline.revision?.kind === 'delete' ? 'w:delText' : 'w:t';
+        return `<w:r>${charFormatXml(format, inline.styleId)}<${t} xml:space="preserve">${escapeText(inline.text)}</${t}></w:r>`;
       }
       case 'tab':
         return '<w:r><w:tab/></w:r>';
@@ -230,6 +248,15 @@ class DocxWriter {
     }
   }
 
+  /** Un contenuto in linea, dentro `w:ins`/`w:del` se ha una revisione (i campi no: lo schema non lo consente). */
+  private revisedInlineXml(inline: Inline, rels: Rels): string {
+    const xml = this.inlineXml(inline, rels);
+    const r = inline.revision;
+    if (!r || !xml || inline.type === 'field') return xml;
+    const tag = this.revisionTag(r);
+    return `<${tag} ${this.revisionAttrs(r)}>${xml}</${tag}>`;
+  }
+
   paragraphXml(p: Paragraph, rels: Rels, sectPr = '', wrap: FieldWrap = {}): string {
     let runs = '';
     let i = 0;
@@ -238,7 +265,7 @@ class DocxWriter {
       const c = children[i]!;
       const link = c.type === 'text' ? c.format.link : undefined;
       if (!link) {
-        runs += this.inlineXml(c, rels);
+        runs += this.revisedInlineXml(c, rels);
         i++;
         continue;
       }
@@ -246,7 +273,7 @@ class DocxWriter {
       while (i < children.length) {
         const n = children[i]!;
         if (n.type !== 'text' || n.format.link !== link) break;
-        inner += this.inlineXml(n, rels);
+        inner += this.revisedInlineXml(n, rels);
         i++;
       }
       runs += link.startsWith('#')
@@ -259,7 +286,7 @@ class DocxWriter {
       runs = `<w:bookmarkStart w:id="${id}" w:name="${escapeAttr(bookmark)}"/>${runs}<w:bookmarkEnd w:id="${id}"/>`;
     }
     runs = (wrap.before ?? '') + runs + (wrap.after ?? '');
-    return `<w:p>${this.paraFormatXml(p.format, p.styleId, p.markFormat, sectPr)}${runs}</w:p>`;
+    return `<w:p>${this.paraFormatXml(p.format, p.styleId, p.markFormat, sectPr, p.revision)}${runs}</w:p>`;
   }
 
   tableXml(t: Table, rels: Rels): string {

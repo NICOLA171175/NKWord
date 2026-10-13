@@ -20,6 +20,13 @@ export interface EditorEvents extends Record<string, unknown> {
   error: { readonly commandId: string; readonly error: unknown };
 }
 
+/**
+ * Filtro di transazione: riceve ogni transazione prima che venga applicata
+ * e può restituirne una diversa (es. il rilevamento modifiche trasforma le
+ * cancellazioni in testo barrato). Deve essere puro come un comando.
+ */
+export type TransactionFilter = (tr: Transaction, state: EditorState) => Transaction;
+
 export class Editor {
   readonly commands = new CommandRegistry();
   readonly events = new Emitter<EditorEvents>();
@@ -29,6 +36,7 @@ export class Editor {
 
   private _state: EditorState;
   private readonly disposers: (() => void)[] = [];
+  private readonly filters: TransactionFilter[] = [];
 
   constructor(state: EditorState = createState()) {
     this._state = state;
@@ -65,9 +73,19 @@ export class Editor {
     return dispose;
   }
 
+  /** Registra un filtro di transazione; restituisce la funzione per toglierlo. */
+  addTransactionFilter(filter: TransactionFilter): () => void {
+    this.filters.push(filter);
+    return () => {
+      const i = this.filters.indexOf(filter);
+      if (i >= 0) this.filters.splice(i, 1);
+    };
+  }
+
   /** Applica una transazione: aggiorna lo stato, la cronologia e notifica. */
   apply(tr: Transaction): void {
     const previous = this._state;
+    for (const filter of this.filters) tr = filter(tr, previous);
     if (tr.state === previous) return;
     const meta = tr.meta ?? {};
     if (tr.state.doc !== previous.doc) this.history.record(previous, meta);

@@ -2,7 +2,9 @@
  * Lettura DOCX: documento, stili (con tema per i caratteri predefiniti),
  * numerazione, sezioni con intestazioni e piè di pagina, tabelle con celle
  * unite, collegamenti, immagini e campi (semplici e complessi). Le
- * revisioni vengono lette come accettate.
+ * revisioni del testo (`w:ins`, `w:del` e spostamenti) diventano
+ * `revision` su contenuto e segni di paragrafo; le altre (formattazione,
+ * tabelle) vengono lette come accettate.
  */
 
 import {
@@ -29,6 +31,7 @@ import {
   type PageSetup,
   type ParaFormat,
   type Paragraph,
+  type Revision,
   type Section,
   type Style,
   type StyleSheet,
@@ -514,8 +517,18 @@ interface SectionGroup {
   readonly sectPr?: MarkupElement;
 }
 
+/** Revisione descritta da un `w:ins`/`w:del` (o `w:moveTo`/`w:moveFrom`). */
+function readRevision(el: MarkupElement | undefined): Revision | undefined {
+  if (!el) return undefined;
+  const kind = el.name === 'w:ins' || el.name === 'w:moveTo' ? 'insert' : 'delete';
+  const date = attr(el, 'w:date');
+  return { kind, author: attr(el, 'w:author') || 'Sconosciuto', ...(date ? { date } : {}) };
+}
+
 class Reader {
   private readonly fields: ComplexField[] = [];
+  /** Revisione del contenitore `w:ins`/`w:del` che si sta leggendo. */
+  private revision: Revision | undefined;
   readonly media: Record<string, string> = {};
 
   constructor(
@@ -601,8 +614,9 @@ class Reader {
     const rStyle = this.styleId(wVal(child(rPr, 'w:rStyle')));
     const effectiveLink = link ?? this.activeLink;
     const format: CharFormat = effectiveLink ? { ...base, link: effectiveLink } : base;
+    const revision = this.revision;
     const push = (inline: Inline) => {
-      if (!this.suppressed) out.push(inline);
+      if (!this.suppressed) out.push(revision ? { ...inline, revision } : inline);
     };
     const pushText = (text: string) => {
       if (text) push({ type: 'text', text, format, ...(rStyle ? { styleId: rStyle } : {}) });
@@ -611,6 +625,7 @@ class Reader {
       if (!isElement(c)) continue;
       switch (c.name) {
         case 'w:t':
+        case 'w:delText':
           pushText(textContent(c).replace(/[\r\n]+/g, ' ').replace(/\t/g, ' '));
           break;
         case 'w:tab':
@@ -711,6 +726,14 @@ class Reader {
           break;
         case 'w:ins':
         case 'w:moveTo':
+        case 'w:del':
+        case 'w:moveFrom': {
+          const outer = this.revision;
+          this.revision = readRevision(c);
+          this.inlineContainer(c.children, part, link, out);
+          this.revision = outer;
+          break;
+        }
         case 'w:smartTag':
         case 'w:customXml':
         case 'w:dir':
@@ -733,7 +756,9 @@ class Reader {
     const inlines: Inline[] = [];
     this.inlineContainer(p.children, part, undefined, inlines);
     const styleId = this.styleId(wVal(child(pPr, 'w:pStyle')));
-    const mark = this.fmt.char(child(pPr, 'w:rPr'));
+    const markPr = child(pPr, 'w:rPr');
+    const mark = this.fmt.char(markPr);
+    const revision = readRevision(child(markPr, 'w:ins') ?? child(markPr, 'w:del') ?? child(markPr, 'w:moveTo') ?? child(markPr, 'w:moveFrom'));
     return {
       type: 'paragraph',
       id: newId(),
@@ -741,6 +766,7 @@ class Reader {
       children: normalizeInlines(inlines),
       ...(styleId ? { styleId } : {}),
       ...(Object.keys(mark).length ? { markFormat: mark } : {}),
+      ...(revision ? { revision } : {}),
     };
   }
 

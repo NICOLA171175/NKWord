@@ -14,6 +14,7 @@ import type {
   ParaFormat,
   Paragraph,
   Position,
+  Revision,
   Section,
   Selection,
   StyleSheet,
@@ -175,6 +176,12 @@ function sameFormat(a: CharFormat, b: CharFormat): boolean {
   return ka.length === kb.length && ka.every((k) => a[k] === b[k]);
 }
 
+/** Due revisioni sono uguali se hanno stesso tipo, autore e data (o mancano entrambe). */
+export function sameRevision(a: Revision | undefined, b: Revision | undefined): boolean {
+  if (a === b) return true;
+  return !!a && !!b && a.kind === b.kind && a.author === b.author && a.date === b.date;
+}
+
 /** Unisce i run di testo adiacenti con stessa formattazione e toglie quelli vuoti. */
 export function normalizeInlines(inlines: readonly Inline[]): Inline[] {
   const out: Inline[] = [];
@@ -182,7 +189,12 @@ export function normalizeInlines(inlines: readonly Inline[]): Inline[] {
     if (inline.type === 'text') {
       if (inline.text === '') continue;
       const prev = out[out.length - 1];
-      if (prev?.type === 'text' && prev.styleId === inline.styleId && sameFormat(prev.format, inline.format)) {
+      if (
+        prev?.type === 'text' &&
+        prev.styleId === inline.styleId &&
+        sameFormat(prev.format, inline.format) &&
+        sameRevision(prev.revision, inline.revision)
+      ) {
         out[out.length - 1] = { ...prev, text: prev.text + inline.text };
         continue;
       }
