@@ -5,6 +5,8 @@ import {
   paragraphLength,
   replaceBlock,
   resolveParaFormat,
+  type BorderLine,
+  type Borders,
   type EditorState,
   type ParaFormat,
   type Paragraph,
@@ -41,6 +43,71 @@ export function mapParagraphs(
 
 export function setParaFormat(state: EditorState, format: ParaFormat, label: string): Transaction | null {
   return mapParagraphs(state, (p) => ({ ...p, format: { ...p.format, ...format } }), label);
+}
+
+/** Formato di paragrafo dato dallo stile, senza la formattazione diretta. */
+function styleParaFormat(state: EditorState, p: Paragraph): ParaFormat {
+  return resolveParaFormat(state.doc.styles, { ...p, format: {} });
+}
+
+/** Sfondo dei paragrafi selezionati (`null` = nessun colore). */
+export function setShading(state: EditorState, color: string | null): Transaction | null {
+  return mapParagraphs(
+    state,
+    (p) => {
+      const { shading: _s, ...rest } = p.format;
+      const base = styleParaFormat(state, p).shading ?? null;
+      const format = color === base ? rest : { ...rest, shading: color };
+      return (p.format.shading ?? base) === color ? p : { ...p, format };
+    },
+    'Sfondo',
+  );
+}
+
+/** Linea predefinita dei bordi di paragrafo: continua, ½ pt, automatica. */
+export const DEFAULT_BORDER: BorderLine = { style: 'single', width: 0.5, color: '#000000' };
+
+export type BorderSides = 'top' | 'bottom' | 'left' | 'right' | 'outside' | 'none';
+const SIDES = ['top', 'right', 'bottom', 'left'] as const;
+
+const visibleLine = (b: BorderLine | undefined): b is BorderLine => !!b && b.style !== 'none' && b.width > 0;
+
+/** Il lato (o tutti i lati per 'outside') è presente in tutti i paragrafi selezionati. */
+export function isBorderActive(state: EditorState, sides: BorderSides): boolean {
+  const all = selectedParagraphs(state).map((p) => resolveParaFormat(state.doc.styles, p).borders ?? {});
+  if (sides === 'none') return all.every((b) => !SIDES.some((s) => visibleLine(b[s])));
+  const wanted = sides === 'outside' ? SIDES : [sides];
+  return all.every((b) => wanted.every((s) => visibleLine(b[s])));
+}
+
+function sameBorders(a: Borders | undefined, b: Borders | undefined): boolean {
+  const key = (x: Borders | undefined) => JSON.stringify(SIDES.map((s) => (visibleLine(x?.[s]) ? x![s] : null)));
+  return key(a) === key(b);
+}
+
+/** Bordi dei paragrafi selezionati, come il pulsante Bordi di Word. */
+export function setBorders(state: EditorState, sides: BorderSides, line: BorderLine = DEFAULT_BORDER): Transaction | null {
+  // Un lato singolo si comporta da interruttore su tutta la selezione.
+  const remove = sides !== 'none' && sides !== 'outside' && isBorderActive(state, sides);
+  return mapParagraphs(
+    state,
+    (p) => {
+      const current = resolveParaFormat(state.doc.styles, p).borders ?? {};
+      let next: Borders;
+      if (sides === 'none') next = {};
+      else if (sides === 'outside') next = { top: line, right: line, bottom: line, left: line };
+      else if (remove) {
+        const { [sides]: _gone, ...rest } = current;
+        next = rest;
+      } else next = { ...current, [sides]: line };
+      const clean: Borders = Object.fromEntries(SIDES.filter((s) => visibleLine(next[s])).map((s) => [s, next[s]]));
+      const { borders: _b, ...rest } = p.format;
+      const base = styleParaFormat(state, p).borders;
+      const format = sameBorders(clean, base) ? rest : { ...rest, borders: clean };
+      return sameBorders(p.format.borders ?? base, clean) ? p : { ...p, format };
+    },
+    'Bordi',
+  );
 }
 
 /** Rientro sinistro al multiplo successivo (o precedente) del passo. */

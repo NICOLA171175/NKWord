@@ -5,6 +5,7 @@
  */
 
 import type { CommandArgs, CommandId, RibbonItem } from '../core';
+import type { PaletteKind } from './color-picker';
 
 export type RibbonTab = RibbonItem['tab'];
 
@@ -18,6 +19,8 @@ export interface UiRibbonItem extends RibbonItem {
   readonly label: string;
   /** Voci di un menu a tendina: ognuna esegue il comando con i propri argomenti. */
   readonly options?: readonly RibbonOption[];
+  /** Pulsante colore con tavolozza (stile Word): il comando riceve `{ color }`. */
+  readonly palette?: PaletteKind;
   /** Chiede gli argomenti all'utente; `undefined` annulla. */
   readonly prompt?: (ask: (message: string, initial?: string) => string | null) => unknown | undefined;
 }
@@ -81,28 +84,8 @@ export const RIBBON_ITEMS: readonly UiRibbonItem[] = [
   item('home', 'Carattere', 'format.strike', 'Barrato', { icon: 'ab', kind: 'toggle' }),
   item('home', 'Carattere', 'format.subscript', 'Pedice', { icon: 'x₂', kind: 'toggle' }),
   item('home', 'Carattere', 'format.superscript', 'Apice', { icon: 'x²', kind: 'toggle' }),
-  item('home', 'Carattere', 'format.highlight', 'Evidenziatore', {
-    icon: '🖍',
-    kind: 'dropdown',
-    options: [
-      { label: 'Giallo', args: { color: '#ffff00' } },
-      { label: 'Verde', args: { color: '#00ff00' } },
-      { label: 'Azzurro', args: { color: '#00ffff' } },
-      { label: 'Rosa', args: { color: '#ff00ff' } },
-      { label: 'Nessun colore', args: { color: null } },
-    ],
-  }),
-  item('home', 'Carattere', 'format.color', 'Colore carattere', {
-    icon: 'A',
-    kind: 'dropdown',
-    options: [
-      { label: 'Automatico', args: { color: '#000000' } },
-      { label: 'Rosso', args: { color: '#c00000' } },
-      { label: 'Blu', args: { color: '#2f5496' } },
-      { label: 'Verde', args: { color: '#538135' } },
-      { label: 'Arancione', args: { color: '#c55a11' } },
-    ],
-  }),
+  item('home', 'Carattere', 'format.highlight', 'Colore evidenziazione testo', { palette: 'highlight', args: { color: null } }),
+  item('home', 'Carattere', 'format.color', 'Colore carattere', { palette: 'text', args: { color: null } }),
 
   item('home', 'Paragrafo', 'list.toggleBullet', 'Elenco puntato', { icon: '•≡', kind: 'toggle' }),
   item('home', 'Paragrafo', 'list.toggleNumbered', 'Elenco numerato', { icon: '1≡', kind: 'toggle', args: {} }),
@@ -118,6 +101,19 @@ export const RIBBON_ITEMS: readonly UiRibbonItem[] = [
     options: LINE_SPACINGS.map((v) => ({ label: v.toFixed(v % 1 ? 2 : 1).replace(/0$/, ''), args: { lineSpacing: { rule: 'multiple', value: v } } })),
   }),
   item('home', 'Paragrafo', 'view.toggleFormattingMarks', 'Mostra tutto', { icon: '¶', kind: 'toggle' }),
+  item('home', 'Paragrafo', 'paragraph.shading', 'Sfondo', { palette: 'shading', args: { color: null } }),
+  item('home', 'Paragrafo', 'paragraph.borders', 'Bordi', {
+    icon: '▢',
+    kind: 'dropdown',
+    options: [
+      { label: 'Bordo inferiore', args: { sides: 'bottom' } },
+      { label: 'Bordo superiore', args: { sides: 'top' } },
+      { label: 'Bordo sinistro', args: { sides: 'left' } },
+      { label: 'Bordo destro', args: { sides: 'right' } },
+      { label: 'Nessun bordo', args: { sides: 'none' } },
+      { label: 'Bordi esterni', args: { sides: 'outside' } },
+    ],
+  }),
 
   item('home', 'Stili', 'style.apply', 'Normale', { kind: 'toggle', args: { styleId: 'Normal' } }),
   item('home', 'Stili', 'style.apply', 'Titolo 1', { kind: 'toggle', args: { styleId: 'Heading1' } }),

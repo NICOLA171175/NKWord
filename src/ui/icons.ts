@@ -45,6 +45,9 @@ const ICONS: Record<string, string> = {
   'format.superscript': S('m3 7 6 8M9 7l-6 8') + T('2', { x: 15, y: 8, 'font-size': 8 }),
   'format.highlight': S('m11.5 3 5 5-6.5 6.5H5v-5z') + S('m5 14.5-2 2.5h4') + '<path class="icon-bar icon-bar-highlight" d="M2 18.5h16"/>',
   'format.color': S('M5 14 9.5 3.5h1L15 14') + S('M6.7 10h6.6') + '<path class="icon-bar icon-bar-color" d="M2 18h16"/>',
+  'paragraph.shading':
+    S('m4 9 5.5-5.5 6 6L10 15z') + S('M4 9h11.5') + S('M16.5 11.5s1.5 1.7 1.5 2.7a1.5 1.5 0 0 1-3 0c0-1 1.5-2.7 1.5-2.7z') + '<path class="icon-bar icon-bar-shading" d="M2 18.5h16"/>',
+  'paragraph.borders': '<rect x="3" y="3" width="14" height="14" stroke-dasharray="1.5 2"/>' + S('M10 3v14M3 10h14').replace('<path', '<path stroke-dasharray="1.5 2"') + S('M2.5 17h15').replace('<path', '<path stroke-width="2"'),
   'format.link': S('M8.5 11.5a3 3 0 0 0 4.2 0l3-3a3 3 0 0 0-4.2-4.2l-1 1') + S('M11.5 8.5a3 3 0 0 0-4.2 0l-3 3a3 3 0 0 0 4.2 4.2l1-1'),
 
   'list.toggleBullet':

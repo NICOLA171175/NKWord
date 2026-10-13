@@ -8,6 +8,7 @@ import type { Editor } from '../core';
 import { sameArgs, type Keymap } from './keymap';
 import type { UiModule } from './module';
 import { extensionIsActive, onExtensionsChange } from './extensions';
+import { ColorButton, DEFAULT_COLORS } from './color-picker';
 import { buttonSize, iconSvg } from './icons';
 import { RIBBON_ITEMS, RIBBON_TABS, type RibbonTab, type UiRibbonItem } from './ribbon-items';
 import { charFormatAtCaret, paraFormatAtCaret, styleIdAtCaret } from './selection-format';
@@ -27,6 +28,7 @@ export interface RibbonOptions {
 interface Control {
   readonly item: UiRibbonItem;
   readonly element: HTMLButtonElement | HTMLSelectElement;
+  readonly palette?: ColorButton;
 }
 
 export class Ribbon {
@@ -38,6 +40,8 @@ export class Ribbon {
   private readonly panel: HTMLElement;
   private readonly tabButtons = new Map<RibbonTab, HTMLButtonElement>();
   private readonly cleanup: (() => void)[] = [];
+  /** Ultimo colore scelto per ogni pulsante colore (resta cambiando scheda). */
+  private readonly colors = new Map<string, string | null>();
 
   constructor(
     private readonly editor: Editor,
@@ -88,15 +92,17 @@ export class Ribbon {
   }
 
   destroy(): void {
+    for (const c of this.controls) c.palette?.destroy();
     for (const c of this.cleanup.splice(0)) c();
     this.element.remove();
   }
 
   /** Aggiorna abilitazione, stato attivo e valori mostrati. */
   refresh(): void {
-    for (const { item, element } of this.controls) {
+    for (const { item, element, palette } of this.controls) {
       element.disabled = !this.isEnabled(item);
-      if (element instanceof HTMLButtonElement) {
+      if (palette) palette.setDisabled(element.disabled);
+      else if (element instanceof HTMLButtonElement) {
         if (item.kind === 'toggle') element.setAttribute('aria-pressed', String(this.isActive(item)));
       } else {
         element.value = this.currentValue(item);
@@ -108,6 +114,7 @@ export class Ribbon {
   }
 
   private renderPanel(): void {
+    for (const c of this.controls) c.palette?.destroy();
     this.panel.replaceChildren();
     this.controls = [];
     const groups = new Map<string, HTMLElement>();
@@ -124,6 +131,14 @@ export class Ribbon {
         group.append(body, title);
         this.panel.append(group);
         groups.set(item.group, body);
+      }
+      if (item.palette) {
+        const palette = this.renderPalette(item);
+        palette.main.dataset.command = item.commandId;
+        body.append(palette.element);
+        body.parentElement!.classList.add('ribbon-group--rows');
+        this.controls.push({ item, element: palette.main, palette });
+        continue;
       }
       const element = item.kind === 'dropdown' && item.options ? this.renderSelect(item) : this.renderButton(item);
       element.dataset.command = item.commandId;
@@ -163,6 +178,23 @@ export class Ribbon {
     b.addEventListener('mousedown', (e) => e.preventDefault());
     b.addEventListener('click', () => this.invoke(item));
     return b;
+  }
+
+  /** Pulsante colore diviso: applica l'ultimo colore o apre la tavolozza. */
+  private renderPalette(item: UiRibbonItem): ColorButton {
+    const kind = item.palette!;
+    const palette = new ColorButton({
+      kind,
+      label: item.label,
+      icon: this.renderIcon(item),
+      initial: this.colors.has(item.commandId) ? this.colors.get(item.commandId)! : DEFAULT_COLORS[kind],
+      onPick: (color) => {
+        this.colors.set(item.commandId, color);
+        this.execute(item.commandId, { color });
+      },
+    });
+    palette.setTitle(item.label);
+    return palette;
   }
 
   /** Icona SVG del set, o in mancanza il testo `icon` della voce. */

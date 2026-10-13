@@ -84,20 +84,72 @@ export function borderDecorations(
   return out;
 }
 
-/** Sfondo e bordi di un paragrafo (o di un suo pezzo su una pagina). */
-export function paragraphDecorations(
+/** Spazio fra il testo e i bordi del paragrafo (valori predefiniti di Word). */
+export const BORDER_SPACE = { top: 1, right: 4, bottom: 1, left: 4 } as const;
+
+const hasBorder = (b: Borders | undefined) => !!b && (visible(b.top) || visible(b.right) || visible(b.bottom) || visible(b.left));
+
+function sameLine(a: BorderLine | undefined, b: BorderLine | undefined): boolean {
+  if (!visible(a) || !visible(b)) return visible(a) === visible(b);
+  return a.style === b.style && a.width === b.width && a.color === b.color;
+}
+
+/**
+ * Due paragrafi consecutivi con gli stessi bordi, sfondo e rientri formano un
+ * unico riquadro, come in Word: niente bordo fra l'uno e l'altro e uno sfondo
+ * continuo anche sullo spazio che li separa.
+ */
+export function sameBox(a: ParaFormat, b: ParaFormat): boolean {
+  if (!hasBorder(a.borders) && !a.shading) return false;
+  const sides = ['top', 'right', 'bottom', 'left'] as const;
+  return (
+    sides.every((s) => sameLine(a.borders?.[s], b.borders?.[s])) &&
+    (a.shading ?? null) === (b.shading ?? null) &&
+    (a.indentLeft ?? 0) === (b.indentLeft ?? 0) &&
+    (a.indentRight ?? 0) === (b.indentRight ?? 0)
+  );
+}
+
+export interface ParagraphBoxDecorations {
+  readonly decorations: Decoration[];
+  /** Bordo inferiore, da togliere se il paragrafo successivo continua il riquadro. */
+  readonly bottomBorder?: Decoration;
+}
+
+/**
+ * Sfondo e bordi di un paragrafo (o di un suo pezzo su una pagina). Con
+ * `joinTop` il riquadro continua quello del paragrafo precedente: niente bordo
+ * superiore, e `top` è già il fondo del precedente.
+ */
+export function paragraphBox(
   format: ParaFormat,
   ox: Points,
   width: Points,
   top: Points,
   height: Points,
-): Decoration[] {
-  const left = ox + (format.indentLeft ?? 0);
-  const w = width - (format.indentLeft ?? 0) - (format.indentRight ?? 0);
-  const out: Decoration[] = [];
-  if (format.shading) out.push({ kind: 'fill', color: format.shading, rect: { x: left, y: top, width: w, height } });
-  if (format.borders) out.push(...borderDecorations(left, top, w, height, format.borders));
-  return out;
+  joinTop = false,
+): ParagraphBoxDecorations {
+  const borders = format.borders;
+  const pad = hasBorder(borders) ? BORDER_SPACE : { top: 0, right: 0, bottom: 0, left: 0 };
+  const left = ox + (format.indentLeft ?? 0) - pad.left;
+  const w = width - (format.indentLeft ?? 0) - (format.indentRight ?? 0) + pad.left + pad.right;
+  const y = joinTop ? top : top - pad.top;
+  const h = height + (joinTop ? 0 : pad.top) + pad.bottom;
+  const decorations: Decoration[] = [];
+  if (format.shading) decorations.push({ kind: 'fill', color: format.shading, rect: { x: left, y, width: w, height: h } });
+  let bottomBorder: Decoration | undefined;
+  if (borders) {
+    const { top: t, bottom, left: l, right } = borders;
+    decorations.push(...borderDecorations(left, y, w, h, { ...(joinTop ? {} : { top: t }), left: l, right }));
+    bottomBorder = borderDecorations(left, y, w, h, { bottom })[0];
+    if (bottomBorder) decorations.push(bottomBorder);
+  }
+  return { decorations, ...(bottomBorder ? { bottomBorder } : {}) };
+}
+
+/** Sfondo e bordi di un paragrafo isolato (o di un suo pezzo su una pagina). */
+export function paragraphDecorations(format: ParaFormat, ox: Points, width: Points, top: Points, height: Points): Decoration[] {
+  return paragraphBox(format, ox, width, top, height).decorations;
 }
 
 /** Impagina una sequenza di blocchi in una colonna larga `width`, senza interruzioni. */
@@ -105,14 +157,21 @@ export function layoutFlow(ctx: LayoutContext, blocks: readonly Block[], width: 
   const lines: LineBox[] = [];
   const decorations: Decoration[] = [];
   let y = 0;
+  let prev: { format: ParaFormat; bottom: Points; bottomBorder?: Decoration } | null = null;
   blocks.forEach((b, i) => {
     if (b.type === 'paragraph') {
       const box = ctx.paragraph(b, width, ctx.fields);
       if (i > 0) y += box.spaceBefore;
       for (const l of box.lines) lines.push(toLineBox(b.id, l, 0, y));
-      decorations.push(...paragraphDecorations(box.format, 0, width, y, box.height));
+      const join = !!prev && sameBox(prev.format, box.format);
+      if (join && prev!.bottomBorder) decorations.splice(decorations.indexOf(prev!.bottomBorder), 1);
+      const top = join ? prev!.bottom : y;
+      const deco = paragraphBox(box.format, 0, width, top, y + box.height - top, join);
+      decorations.push(...deco.decorations);
+      prev = { format: box.format, bottom: y + box.height, ...(deco.bottomBorder ? { bottomBorder: deco.bottomBorder } : {}) };
       y += box.height + box.spaceAfter;
     } else {
+      prev = null;
       const t = layoutTable(ctx, b, width);
       for (const row of t.rows) {
         lines.push(...row.lines.map((l) => translateLine(l, 0, y)));

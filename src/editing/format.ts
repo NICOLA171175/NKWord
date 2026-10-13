@@ -81,7 +81,8 @@ function prune(sheet: StyleSheet, p: Paragraph, format: CharFormat, changed: Cha
     const v = out[key];
     const b = base[key];
     const neutral = v === null || v === false || v === 'baseline';
-    if (v === b || (b === undefined && neutral)) delete out[key];
+    // `undefined` toglie il formato diretto (es. colore Automatico): torna quello dello stile.
+    if (v === undefined || v === b || (b === undefined && neutral)) delete out[key];
   }
   return out;
 }
@@ -129,7 +130,8 @@ export function applyCharChangeToRange(
 export function applyCharChange(state: EditorState, change: CharChange, label: string): Transaction {
   const range = targetRange(state);
   if (!range) {
-    const pendingFormat = { ...state.pendingFormat, ...change(caretFormat(state)) };
+    const pendingFormat: Mutable<CharFormat> = { ...state.pendingFormat, ...change(caretFormat(state)) };
+    for (const key of Object.keys(pendingFormat) as (keyof CharFormat)[]) if (pendingFormat[key] === undefined) delete pendingFormat[key];
     return { state: { ...state, pendingFormat }, meta: { label, addToHistory: false } };
   }
   const doc = applyCharChangeToRange(state.doc, range[0], range[1], change);

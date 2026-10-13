@@ -213,10 +213,14 @@ export function paraFormatToCss(f: ParaFormat): string[] {
   if (f.keepWithNext) out.push('page-break-after:avoid');
   if (f.shading) out.push(`background-color:${f.shading}`);
   if (f.borders) {
+    let any = false;
     for (const side of ['top', 'right', 'bottom', 'left'] as const) {
       const css = borderCss(f.borders[side]);
       if (css) out.push(`border-${side}:${css}`);
+      any ||= !!css;
     }
+    // Spazio fra testo e bordo, come in Word.
+    if (any) out.push('padding:1pt 4pt');
   }
   return out;
 }

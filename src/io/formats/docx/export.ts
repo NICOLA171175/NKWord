@@ -84,15 +84,19 @@ class Rels {
   }
 }
 
-function borderXml(side: string, b: BorderLine | undefined): string {
+function borderXml(side: string, b: BorderLine | undefined, space = 0): string {
   if (!b) return '';
   const style = b.style === 'none' ? 'nil' : b.style;
-  return `<w:${side} w:val="${style}" w:sz="${Math.max(2, Math.round(b.width * 8))}" w:space="0" w:color="${hex(b.color)}"/>`;
+  return `<w:${side} w:val="${style}" w:sz="${Math.max(2, Math.round(b.width * 8))}" w:space="${space}" w:color="${hex(b.color)}"/>`;
 }
+
+/** Distanza dal testo dei bordi di paragrafo, in punti (come l'impaginazione). */
+const PARA_BORDER_SPACE: Record<string, number> = { top: 1, bottom: 1, left: 4, right: 4 };
 
 function bordersXml(tag: string, b: Borders & { insideH?: BorderLine; insideV?: BorderLine } | undefined, order: readonly string[]): string {
   if (!b) return '';
-  const inner = order.map((side) => borderXml(side, (b as Record<string, BorderLine | undefined>)[side])).join('');
+  const space = (side: string) => (tag === 'pBdr' ? PARA_BORDER_SPACE[side] : 0);
+  const inner = order.map((side) => borderXml(side, (b as Record<string, BorderLine | undefined>)[side], space(side))).join('');
   return inner ? `<w:${tag}>${inner}</w:${tag}>` : '';
 }
 

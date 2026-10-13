@@ -247,6 +247,10 @@ body,
   stroke: #d13438;
 }
 
+.ribbon-svg .icon-bar-shading {
+  stroke: #d9d9d9;
+}
+
 .ribbon-svg .icon-fill {
   fill: var(--accent);
   stroke: none;
@@ -356,13 +360,22 @@ body,
 
 /* Gruppo Paragrafo: elenchi e rientri sopra, allineamenti sotto. */
 .ribbon-group--rows .ribbon-group-body:has([data-command='paragraph.align']) {
-  max-width: 184px;
+  max-width: 290px;
+}
+
+/* A capo forzato fra le due righe: viene dopo gli elementi della prima (order 0). */
+.ribbon-group--rows .ribbon-group-body:has([data-command='paragraph.align'])::after {
+  content: '';
+  flex-basis: 100%;
+  height: 0;
 }
 
 .ribbon-group--rows [aria-label^='Allinea'],
 .ribbon-group--rows [aria-label='Centra'],
 .ribbon-group--rows [aria-label='Giustifica'],
-.ribbon-group--rows .ribbon-dropdown:has([data-command='paragraph.lineSpacing']) {
+.ribbon-group--rows .ribbon-dropdown:has([data-command='paragraph.lineSpacing']),
+.ribbon-group--rows .ribbon-split[data-palette='shading'],
+.ribbon-group--rows .ribbon-dropdown:has([data-command='paragraph.borders']) {
   order: 1;
 }
 
@@ -778,4 +791,134 @@ body,
     box-shadow: none;
     break-after: page;
   }
+}
+
+/* Pulsanti colore divisi (colore carattere, evidenziatore, sfondo) e tavolozza. */
+.ribbon-split {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius);
+}
+
+.ribbon-split:hover:not(:has(button:disabled)) {
+  box-shadow: inset 0 0 0 1px var(--ribbon-border);
+}
+
+.ribbon-split .ribbon-split-main {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  padding-right: 2px;
+}
+
+.ribbon-split .ribbon-split-arrow {
+  min-width: 14px;
+  height: 28px;
+  padding: 0 1px;
+  justify-content: center;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.ribbon-split-arrow[aria-expanded='true'] {
+  background: var(--pressed);
+}
+
+.color-menu {
+  position: fixed;
+  z-index: 50;
+  min-width: 200px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--ribbon-border);
+  border-radius: 6px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.color-menu[hidden] {
+  display: none;
+}
+
+.color-menu-heading {
+  margin: 6px 2px 4px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.color-grid {
+  display: grid;
+  gap: 2px;
+}
+
+/* Nei colori del tema la prima riga è staccata dalle sfumature, come in Word. */
+.color-grid--theme .color-swatch:nth-child(-n + 10) {
+  margin-bottom: 4px;
+}
+
+.color-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.color-swatch:hover,
+.color-swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.color-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 2px 0;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.color-menu-item:hover,
+.color-menu-item:focus-visible {
+  background: var(--hover);
+}
+
+.color-menu-sample {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 2px;
+}
+
+.color-menu-sample--none {
+  background: linear-gradient(to top left, transparent 46%, #d13438 46%, #d13438 54%, transparent 54%), #fff;
+}
+
+.color-menu-sample--rainbow {
+  background: conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+}
+
+.color-menu-more {
+  position: relative;
+  margin-top: 6px;
+}
+
+.color-menu-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }

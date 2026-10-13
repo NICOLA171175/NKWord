@@ -20,6 +20,7 @@ import type {
   LayoutEngine,
   LineBox,
   PageLayout,
+  ParaFormat,
   Paragraph,
   Points,
   Rect,
@@ -28,7 +29,7 @@ import type {
   Table,
   TextMeasurer,
 } from '../core';
-import { layoutFlow, layoutTable, paragraphDecorations, translateDecoration, translateLine, type Flow, type LayoutContext, type RowBox } from './flow';
+import { layoutFlow, layoutTable, paragraphBox, sameBox, translateDecoration, translateLine, type Flow, type LayoutContext, type RowBox } from './flow';
 import { createGeometry } from './geometry';
 import { computeMarkers } from './lists';
 import { hasFields, layoutParagraph, type FieldContext, type MarkerInfo, type ParaBox } from './paragraph';
@@ -112,6 +113,8 @@ class Paginator implements LayoutContext {
   private page!: MutablePage;
   private section!: Section;
   private frames: Frame[] = [];
+  /** Riquadro (bordi/sfondo) dell'ultimo paragrafo posato, per unirlo al successivo. */
+  private lastBox: { format: ParaFormat; page: unknown; col: number; bottom: Points; bottomBorder?: Decoration } | null = null;
   private col = 0;
   private y = 0;
   usedNumPages = false;
@@ -337,10 +340,21 @@ class Paginator implements LayoutContext {
     const widowControl = fmt.widowControl !== false && n > 1;
     let firstOnFrame = 0;
     let chunkTop = this.y;
+    // Riquadro condiviso con il paragrafo precedente (stessi bordi e sfondo, stessa colonna).
+    const last = this.lastBox;
+    let join = !!last && last.page === this.page && last.col === this.col && sameBox(last.format, fmt);
     const closeChunk = () => {
       if (this.y > chunkTop) {
-        this.page.decorations.push(...paragraphDecorations(fmt, this.frame.x, this.frame.width, chunkTop, this.y - chunkTop));
+        if (join && last!.bottomBorder) {
+          const at = this.page.decorations.indexOf(last!.bottomBorder);
+          if (at >= 0) this.page.decorations.splice(at, 1);
+        }
+        const top = join ? last!.bottom : chunkTop;
+        const deco = paragraphBox(fmt, this.frame.x, this.frame.width, top, this.y - top, join);
+        this.page.decorations.push(...deco.decorations);
+        this.lastBox = { format: fmt, page: this.page, col: this.col, bottom: this.y, ...(deco.bottomBorder ? { bottomBorder: deco.bottomBorder } : {}) };
       }
+      join = false;
     };
     const popLine = () => {
       const l = this.page.lines.pop()!;
@@ -411,6 +425,7 @@ class Paginator implements LayoutContext {
   }
 
   private placeTable(t: Table): void {
+    this.lastBox = null;
     const box = layoutTable(this, t, this.frame.width);
     let headerCount = 0;
     while (headerCount < box.rows.length && box.rows[headerCount]!.isHeader) headerCount++;

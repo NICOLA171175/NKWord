@@ -11,6 +11,7 @@
 import type { FileData } from './interfaces';
 import type {
   Alignment,
+  BorderLine,
   CharFormat,
   DocumentModel,
   FieldKind,
@@ -64,7 +65,8 @@ export interface CommandArgs {
   'format.fontSize': { fontSize: Points };
   'format.growFont': void;
   'format.shrinkFont': void;
-  'format.color': { color: string };
+  /** `null` = Automatico: toglie il colore diretto. */
+  'format.color': { color: string | null };
   'format.highlight': { color: string | null };
   'format.setChar': { format: CharFormat };
   'format.clear': void;
@@ -77,6 +79,13 @@ export interface CommandArgs {
   'paragraph.lineSpacing': { lineSpacing: LineSpacing };
   'paragraph.spacing': { before?: Points; after?: Points };
   'paragraph.setFormat': { format: ParaFormat };
+  /** Sfondo dei paragrafi selezionati; `null` = nessun colore. */
+  'paragraph.shading': { color: string | null };
+  /**
+   * Bordi dei paragrafi selezionati, come il pulsante Bordi di Word: un lato
+   * si attiva o disattiva, 'outside' mette tutti e quattro i lati, 'none' li toglie.
+   */
+  'paragraph.borders': { sides: 'top' | 'bottom' | 'left' | 'right' | 'outside' | 'none'; line?: BorderLine };
   'style.apply': { styleId: Id };
 
   // structures: elenchi -------------------------------------------------
@@ -175,6 +184,8 @@ export const COMMAND_OWNERS: { readonly [K in CommandId]: CommandOwner } = {
   'paragraph.lineSpacing': 'editing',
   'paragraph.spacing': 'editing',
   'paragraph.setFormat': 'editing',
+  'paragraph.shading': 'editing',
+  'paragraph.borders': 'editing',
   'style.apply': 'editing',
   'list.toggleBullet': 'structures',
   'list.toggleNumbered': 'structures',

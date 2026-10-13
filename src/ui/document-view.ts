@@ -353,6 +353,12 @@ export class DocumentView {
     if (pf.indentRight) el.style.paddingRight = px(pf.indentRight);
     if (pf.indentFirstLine) el.style.textIndent = px(pf.indentFirstLine);
     if (pf.shading) el.style.background = pf.shading;
+    for (const side of ['top', 'right', 'bottom', 'left'] as const) {
+      const b = pf.borders?.[side];
+      if (!b || b.style === 'none' || b.width <= 0) continue;
+      el.style.setProperty(`border-${side}`, `${px(b.width)} ${b.style === 'single' ? 'solid' : b.style} ${b.color}`);
+      if (side === 'top' || side === 'bottom') el.style.setProperty(`padding-${side}`, px(1));
+    }
     if (pf.lineSpacing?.rule === 'multiple') el.style.lineHeight = String(pf.lineSpacing.value * 1.15);
     else if (pf.lineSpacing) el.style.lineHeight = px(pf.lineSpacing.value);
     applyStyle(el, charStyle(resolveCharFormat(sheet, p), vs.zoom));

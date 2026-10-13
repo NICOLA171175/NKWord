@@ -8,7 +8,7 @@ import type { Command, CommandArgs, CommandId, Editor, EditorModule, EditorState
 import { find, replace } from './find';
 import { applyCharChange, applyToggle, clearFormatting, growSize, isToggleActive, setLink, shrinkSize, TOGGLES, MAX_FONT_SIZE, MIN_FONT_SIZE } from './format';
 import { moveCaret, selectAll, setSelection, type LineBounds } from './navigation';
-import { applyStyle, setParaFormat, shiftIndent } from './paragraph';
+import { applyStyle, setBorders, setParaFormat, setShading, shiftIndent } from './paragraph';
 import { deleteBackward, deleteForward, deleteSelection, insertFragment, insertInline, insertText, splitParagraph } from './text';
 import { isCollapsed } from './selection';
 
@@ -95,7 +95,7 @@ export function editingCommands(lineBounds?: LineBounds): Command<any>[] {
     }),
     cmd('format.color', {
       label: 'Colore carattere',
-      run: ({ state }, a) => applyCharChange(state, () => ({ color: a.color }), 'Colore carattere'),
+      run: ({ state }, a) => applyCharChange(state, () => ({ color: a.color ?? undefined }), 'Colore carattere'),
     }),
     cmd('format.highlight', {
       label: 'Colore evidenziazione testo',
@@ -134,6 +134,15 @@ export function editingCommands(lineBounds?: LineBounds): Command<any>[] {
     cmd('paragraph.setFormat', {
       label: 'Paragrafo',
       run: ({ state }, a) => setParaFormat(state, a.format, 'Paragrafo'),
+    }),
+    cmd('paragraph.shading', {
+      label: 'Sfondo',
+      run: ({ state }, a) => setShading(state, a.color),
+    }),
+    cmd('paragraph.borders', {
+      label: 'Bordi',
+      isEnabled: (_ctx, a) => !!a?.sides,
+      run: ({ state }, a) => setBorders(state, a.sides, a.line),
     }),
     cmd('style.apply', {
       label: 'Stili',
