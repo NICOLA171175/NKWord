@@ -146,7 +146,12 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
     keymap,
     ask: options.ask,
     handlers: { 'file.open': pickFile },
-    afterAction: () => input.focus(),
+    // Il focus torna al documento, ma non se il comando ha aperto una finestra
+    // (didascalia, intestazione...): lì si deve poter scrivere e premere Esc.
+    afterAction: () => {
+      const active = root.ownerDocument.activeElement;
+      if (!active || active === root.ownerDocument.body || ribbon.element.contains(active)) input.focus();
+    },
   });
 
   // Barra contestuale di intestazione/piè di pagina, come in Word.
@@ -174,6 +179,17 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
       const part = uiModule.view.state.headerFooter;
       if (e.key === 'Escape' && part) {
         runFirstExecutable(editor, [{ commandId: 'page.headerFooter', args: { part, edit: false } }]);
+        return true;
+      }
+      // Ctrl+S salva (in Word), Ctrl+O apre: il browser farebbe "Salva pagina" e "Apri file".
+      const mod = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey;
+      const key = e.key.toLowerCase();
+      if (mod && key === 's') {
+        runFirstExecutable(editor, [{ commandId: 'file.export', args: { formatId: 'docx' } }]);
+        return true;
+      }
+      if (mod && key === 'o') {
+        pickFile();
         return true;
       }
       return false;

@@ -69,6 +69,11 @@ export function createUiModule(options: UiModuleOptions = {}): UiModule {
     async: true,
     isEnabled: (_ctx, args) => !!args && (args.part === 'header' || args.part === 'footer'),
     run: async (_ctx, { part, edit }) => {
+      // Con il modulo intestazione e piè di pagina si apre la sua finestra.
+      if (edit && editor?.commands.has('headerFooter.edit')) {
+        await editor.executeAsync('headerFooter.edit', { part });
+        return null;
+      }
       if (edit) view.update({ headerFooter: part });
       else if (view.state.headerFooter === part) view.update({ headerFooter: null });
       return null;

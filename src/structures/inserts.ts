@@ -68,6 +68,12 @@ export function applyPageSetup(page: PageSetup, change: Partial<PageSetup>): Pag
   if (change.orientation && change.orientation !== page.orientation && change.width === undefined && change.height === undefined) {
     next = { ...next, width: page.height, height: page.width };
   }
+  // Un nuovo formato carta senza orientamento esplicito mantiene quello della pagina.
+  if (!change.orientation && change.width !== undefined && change.height !== undefined) {
+    const long = Math.max(change.width, change.height);
+    const short = Math.min(change.width, change.height);
+    next = next.orientation === 'landscape' ? { ...next, width: long, height: short } : { ...next, width: short, height: long };
+  }
   return next;
 }
 

@@ -94,6 +94,18 @@ export function mountAutosave(host: AutosaveHost, module: AutosaveModule): () =>
     }
   });
 
+  // File > Nuovo o Apri sostituiscono il documento: con modifiche non salvate
+  // si chiede conferma, come fa Word prima di chiudere un documento.
+  const offFilter = editor.addTransactionFilter((tr, previous) => {
+    const label = tr.meta?.label;
+    if (!module.dirty || !win || (label !== 'file.new' && label !== 'file.open')) return tr;
+    const message =
+      label === 'file.new'
+        ? 'Il documento ha modifiche non salvate, che andranno perse. Creare comunque un nuovo documento?\n\nPer salvarlo prima scegli Annulla e poi File > Salva.'
+        : 'Il documento ha modifiche non salvate, che andranno perse. Aprire comunque l\'altro documento?\n\nPer salvarlo prima scegli Annulla e poi File > Salva.';
+    return win.confirm(message) ? tr : { ...tr, state: previous };
+  });
+
   if (host.ribbon) host.ribbon.element.after(banner);
   else doc.body.prepend(banner);
   host.statusBar?.element.append(indicator);
@@ -111,6 +123,7 @@ export function mountAutosave(host: AutosaveHost, module: AutosaveModule): () =>
   return () => {
     off();
     offExec();
+    offFilter();
     win?.removeEventListener('pagehide', flush);
     doc.removeEventListener('visibilitychange', onVisibility);
     banner.remove();

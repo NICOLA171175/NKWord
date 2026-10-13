@@ -321,6 +321,11 @@ body,
   cursor: pointer;
 }
 
+/* Anche spento il menu resta invisibile: altrimenti il suo testo si sovrappone all'etichetta. */
+.ribbon-select-overlay:disabled {
+  opacity: 0;
+}
+
 .ribbon-chevron {
   width: 10px;
   height: 10px;

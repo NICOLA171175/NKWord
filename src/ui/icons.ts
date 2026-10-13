@@ -77,9 +77,12 @@ const ICONS: Record<string, string> = {
   'page.headerFooter:header': PAGE + '<path class="icon-fill" d="M6.5 4h4.5v2.5h-4.5z"/>',
   'page.headerFooter:footer': PAGE + '<path class="icon-fill" d="M6.5 13.5h7V16h-7z"/>',
   'insert.field:page': S('M7 3.5 5.5 16.5M13 3.5l-1.5 13M3.5 7.5h13M3 12.5h13'),
+  'headerFooter.pageNumber': S('M7 3.5 5.5 16.5M13 3.5l-1.5 13M3.5 7.5h13M3 12.5h13'),
   'insert.field:numPages': S('M7 3.5 5.5 16.5M13 3.5l-1.5 13M3.5 7.5h13M3 12.5h13'),
   'insert.field:date': '<rect x="2.5" y="4" width="15" height="13" rx="1.5"/>' + S('M2.5 8h15M6.5 2.5v3M13.5 2.5v3M6 11h2M9 11h2M12 11h2M6 14h2M9 14h2'),
   'insert.field:time': '<circle cx="10" cy="10" r="7.5"/>' + S('M10 5.5V10l3 2'),
+  'page.setup#Margini': S('M4 2.5h12v15H4z') + '<path d="M7 5.5h6v9H7z" stroke-dasharray="1.5 1.2"/>',
+  'page.setup#Dimensioni': S('M5 2.5h10v15H5z') + S('M2.5 5v10M1.5 6 2.5 5l1 1M1.5 14l1 1 1-1'),
   'page.setup': S('M3 6.5h11v11H3z') + S('M8 2.5h9v9') + S('M12.5 2.5 14 1M12.5 2.5 14 4'),
 
   'footnote.insert': T('ab', { x: 8, 'font-size': 11 }) + T('1', { x: 16, y: 8, 'font-size': 7 }) + S('M3 17.5h14'),
@@ -121,8 +124,9 @@ const ICONS: Record<string, string> = {
 const ARG_KEYS = ['align', 'part', 'kind', 'zoom'] as const;
 
 /** Chiave dell'icona: id del comando, più l'argomento che distingue le varianti. */
-export function iconKey(item: Pick<UiRibbonItem, 'commandId' | 'args'>): string[] {
-  const keys: string[] = [];
+export function iconKey(item: Pick<UiRibbonItem, 'commandId' | 'args'> & { readonly label?: string }): string[] {
+  // Menu dello stesso comando con icone diverse (es. Layout > Margini e Dimensioni).
+  const keys: string[] = item.label ? [`${item.commandId}#${item.label}`] : [];
   const args = item.args as Record<string, unknown> | undefined;
   if (args && typeof args === 'object') {
     for (const k of ARG_KEYS) if (k in args) keys.push(`${item.commandId}:${String(args[k])}`);
@@ -132,7 +136,7 @@ export function iconKey(item: Pick<UiRibbonItem, 'commandId' | 'args'>): string[
 }
 
 /** Icona SVG della voce, o `null` se il set non la prevede. */
-export function iconSvg(item: Pick<UiRibbonItem, 'commandId' | 'args'>): SVGSVGElement | null {
+export function iconSvg(item: Pick<UiRibbonItem, 'commandId' | 'args'> & { readonly label?: string }): SVGSVGElement | null {
   const key = iconKey(item).find((k) => k in ICONS);
   if (!key) return null;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

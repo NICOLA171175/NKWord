@@ -18,7 +18,7 @@ import {
   type Selection,
 } from '../core';
 import { mountCommentsPanel, type PanelHost } from './panel';
-import { addComment, addReply, commentsAt, commentThreads, deleteComment, initialsOf, updateComment, wordAt } from './model';
+import { addComment, addReply, commentsAt, commentThreads, deleteComment, initialsOf, nearestWord, updateComment, wordAt } from './model';
 
 type CommentCommand<K extends CommandId> = Command<CommandArgs[K]> & { readonly id: K };
 
@@ -46,8 +46,11 @@ export function commentTarget(state: EditorState): Selection | null {
     return { anchor: from, focus: to };
   }
   const p = findParagraph(state.doc, sel.focus.paragraphId)?.paragraph;
-  const word = p && wordAt(p, sel.focus.offset);
-  if (!p || !word) return null;
+  if (!p) return null;
+  // Come in Word: senza selezione si commenta la parola al cursore, o in
+  // mancanza la più vicina del paragrafo (es. cursore dopo il punto finale).
+  const word = wordAt(p, sel.focus.offset) ?? nearestWord(p, sel.focus.offset);
+  if (!word) return null;
   return { anchor: { paragraphId: p.id, offset: word[0] }, focus: { paragraphId: p.id, offset: word[1] } };
 }
 

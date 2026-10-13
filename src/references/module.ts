@@ -8,7 +8,7 @@
  * da soli (test, macro).
  */
 
-import type { AsyncCommand, Command, DocumentModel, Editor, EditorModule, EditorState, Transaction } from '../core';
+import { paragraph, type AsyncCommand, type Command, type DocumentModel, type Editor, type EditorModule, type EditorState, type Transaction } from '../core';
 import { captionLabels, canInsertCaption, defaultPosition, insertCaption, nextCaptionNumber, renumberCaptions, type CaptionArgs, type CaptionPosition } from './captions';
 import { pageMap } from './common';
 import {
@@ -52,11 +52,15 @@ export interface ReferencesOptions {
   readonly dialogs?: ReferencesDialogs;
 }
 
-/** Paragrafo del cursore, se è un blocco di primo livello (non in una tabella). */
+/**
+ * Dove inserire l'indice: prima del paragrafo del cursore, o dopo se il
+ * cursore non è all'inizio (come in Word). Solo paragrafi di primo livello.
+ */
 function caretBlock(state: EditorState): { sectionIndex: number; index: number } | undefined {
+  const { paragraphId, offset } = state.selection.focus;
   for (let s = 0; s < state.doc.sections.length; s++) {
-    const index = state.doc.sections[s]!.blocks.findIndex((b) => b.type === 'paragraph' && b.id === state.selection.focus.paragraphId);
-    if (index >= 0) return { sectionIndex: s, index };
+    const index = state.doc.sections[s]!.blocks.findIndex((b) => b.type === 'paragraph' && b.id === paragraphId);
+    if (index >= 0) return { sectionIndex: s, index: index + (offset > 0 ? 1 : 0) };
   }
   return undefined;
 }
@@ -118,7 +122,12 @@ export function createReferencesCommands(editor: Editor, options: ReferencesOpti
       if (existing) return keep(state, writeIndex(state.doc, existing, layout()), 'Aggiorna indice');
       const at = caretBlock(state);
       if (!at) return null;
-      const doc = writeIndex(state.doc, { sectionIndex: at.sectionIndex, start: at.index, end: at.index }, layout());
+      const written = writeIndex(state.doc, { sectionIndex: at.sectionIndex, start: at.index, end: at.index }, layout());
+      // In fondo alla sezione resta un paragrafo vuoto dopo l'indice, dove continuare a scrivere.
+      const atEnd = at.index >= state.doc.sections[at.sectionIndex]!.blocks.length;
+      const doc = atEnd
+        ? { ...written, sections: written.sections.map((s, i) => (i === at.sectionIndex ? { ...s, blocks: [...s.blocks, paragraph()] } : s)) }
+        : written;
       return { state: { doc, selection: state.selection }, meta: { label: 'Inserisci indice' } };
     },
   };

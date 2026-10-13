@@ -64,6 +64,8 @@ export class Ribbon {
       b.setAttribute('role', 'tab');
       b.dataset.tab = id;
       b.textContent = RIBBON_TABS.find((t) => t.id === id)!.label;
+      // Come in Word, cambiare scheda non toglie il cursore al documento.
+      b.addEventListener('mousedown', (e) => e.preventDefault());
       b.addEventListener('click', () => this.selectTab(id));
       this.tabButtons.set(id, b);
       tablist.append(b);
@@ -282,6 +284,7 @@ export class Ribbon {
   isEnabled(item: UiRibbonItem): boolean {
     if (!this.editor.commands.has(item.commandId)) return false;
     // Gli argomenti chiesti all'utente o gestiti dalla shell non sono ancora noti.
+    if (item.needsTarget) return this.editor.canExecute(item.commandId, undefined);
     if (item.prompt || this.options.handlers?.[item.commandId]) return true;
     const args = item.options ? item.options[0]?.args : item.args;
     return this.editor.canExecute(item.commandId, args);

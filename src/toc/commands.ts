@@ -7,6 +7,7 @@
 import {
   caret,
   findParagraph,
+  paragraph,
   type Command,
   type DocumentModel,
   type Editor,
@@ -16,7 +17,7 @@ import {
 import { findToc, removeToc, writeToc } from './toc';
 
 export interface TocCommandArgs {
-  /** Inserisce il sommario prima del paragrafo del cursore; se esiste già lo aggiorna. */
+  /** Inserisce il sommario al cursore (prima o dopo il suo paragrafo); se esiste già lo aggiorna. */
   'toc.insert': { levels?: number } | void;
   /** Rigenera voci e numeri di pagina del sommario esistente. */
   'toc.update': void;
@@ -36,15 +37,27 @@ function keepSelection(doc: DocumentModel, sel: Selection, fallback: { sectionIn
   return sel;
 }
 
+/** Inserito in fondo alla sezione: come in Word resta un paragrafo vuoto dopo, dove continuare a scrivere. */
+export function withParagraphAfter(doc: DocumentModel, before: DocumentModel, at: { sectionIndex: number; index: number }): DocumentModel {
+  if (at.index < before.sections[at.sectionIndex]!.blocks.length) return doc;
+  const sections = doc.sections.map((s, i) => (i === at.sectionIndex ? { ...s, blocks: [...s.blocks, paragraph()] } : s));
+  return { ...doc, sections };
+}
+
 function transaction(state: EditorState, doc: DocumentModel, fallback: { sectionIndex: number; index: number }, label: string) {
   return { state: { doc, selection: keepSelection(doc, state.selection, fallback) }, meta: { label } };
 }
 
-/** Paragrafo del cursore, se è un blocco di primo livello (non in una tabella). */
+/**
+ * Dove inserire il sommario: prima del paragrafo del cursore, o dopo se il
+ * cursore non è all'inizio (come in Word, che lo mette al punto del cursore).
+ * Solo per paragrafi di primo livello (non in una tabella).
+ */
 function caretBlock(state: EditorState): { sectionIndex: number; index: number } | undefined {
   const loc = findParagraph(state.doc, state.selection.focus.paragraphId);
   if (!loc || loc.path.length !== 1) return undefined;
-  return { sectionIndex: loc.sectionIndex, index: loc.path[0]! };
+  const after = state.selection.focus.offset > 0 ? 1 : 0;
+  return { sectionIndex: loc.sectionIndex, index: loc.path[0]! + after };
 }
 
 export function createTocCommands(editor: Editor): Command<any>[] {
@@ -63,7 +76,11 @@ export function createTocCommands(editor: Editor): Command<any>[] {
       }
       const at = caretBlock(state);
       if (!at) return null;
-      const doc = writeToc(state.doc, { sectionIndex: at.sectionIndex, start: at.index, end: at.index }, { levels, layout: layout() });
+      const doc = withParagraphAfter(
+        writeToc(state.doc, { sectionIndex: at.sectionIndex, start: at.index, end: at.index }, { levels, layout: layout() }),
+        state.doc,
+        at,
+      );
       return transaction(state, doc, at, 'Inserisci sommario');
     },
   };

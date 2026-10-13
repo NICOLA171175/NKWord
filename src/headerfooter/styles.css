@@ -1,0 +1,104 @@
+/* Finestra Intestazione / Piè di pagina; i colori seguono il tema (chiaro o scuro). */
+
+.hf-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.hf-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(420px, calc(100vw - 32px));
+  padding: 16px 20px;
+  background: var(--ribbon-bg, #fff);
+  color: var(--text, #242424);
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  font: 13px 'Segoe UI', system-ui, sans-serif;
+}
+
+.hf-dialog h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.hf-intro,
+.hf-warning {
+  margin: 0;
+  color: var(--muted, #616161);
+}
+
+.hf-warning {
+  color: #a4262c;
+}
+
+.hf-text,
+.hf-align {
+  padding: 4px 6px;
+  border: 1px solid var(--ribbon-border, #c8c8c8);
+  border-radius: 4px;
+  background: var(--chrome, #fff);
+  color: inherit;
+  font: inherit;
+}
+
+.hf-text {
+  resize: vertical;
+}
+
+.hf-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hf-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hf-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.hf-buttons button {
+  min-width: 80px;
+  padding: 5px 12px;
+  border: 1px solid var(--ribbon-border, #c8c8c8);
+  border-radius: 4px;
+  background: var(--chrome, #fff);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hf-buttons .hf-remove {
+  margin-right: auto;
+}
+
+.hf-buttons button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.hf-buttons .hf-primary {
+  border-color: #2b579a;
+  background: #2b579a;
+  color: #fff;
+}
+
+@media screen {
+  :root[data-theme='dark'] .hf-warning {
+    color: #f1707b;
+  }
+}

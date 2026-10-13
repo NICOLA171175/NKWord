@@ -221,3 +221,11 @@ export function wordAt(p: Paragraph, offset: number): [number, number] | null {
   while (b < text.length && WORD.test(text[b]!)) b++;
   return b > a ? [a, b] : null;
 }
+
+/** Parola più vicina a `offset` nel paragrafo: prima quella precedente, poi la successiva. */
+export function nearestWord(p: Paragraph, offset: number): [number, number] | null {
+  const text = paragraphText(p);
+  for (let i = Math.min(offset, text.length) - 1; i >= 0; i--) if (WORD.test(text[i]!)) return wordAt(p, i + 1);
+  for (let i = offset; i < text.length; i++) if (WORD.test(text[i]!)) return wordAt(p, i);
+  return null;
+}

@@ -4,7 +4,7 @@
  * registrato il comando, il pulsante resta disabilitato (`canExecute` false).
  */
 
-import type { CommandArgs, CommandId, RibbonItem } from '../core';
+import { cmToPt, PAGE_SIZES, type CommandArgs, type CommandId, type PageMargins, type RibbonItem } from '../core';
 import type { PaletteKind } from './color-picker';
 
 export type RibbonTab = RibbonItem['tab'];
@@ -21,6 +21,11 @@ export interface UiRibbonItem extends RibbonItem {
   readonly options?: readonly RibbonOption[];
   /** Pulsante colore con tavolozza (stile Word): il comando riceve `{ color }`. */
   readonly palette?: PaletteKind;
+  /**
+   * Con `prompt`: il comando agisce su qualcosa al cursore (es. la nota da
+   * modificare) e sa dire senza argomenti se c'è; altrimenti il pulsante è spento.
+   */
+  readonly needsTarget?: boolean;
   /** Chiede gli argomenti all'utente; `undefined` annulla. */
   readonly prompt?: (ask: (message: string, initial?: string) => string | null) => unknown | undefined;
 }
@@ -52,11 +57,36 @@ const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
 const percent = (z: number) => `${Math.round(z * 100)}%`;
 
+/** Margini predefiniti di Word (Layout > Margini), in cm: superiore, destro, inferiore, sinistro. */
+const MARGINS: readonly [string, number, number, number, number][] = [
+  ['Normali', 2.5, 2, 2, 2],
+  ['Stretti', 1.27, 1.27, 1.27, 1.27],
+  ['Moderati', 2.54, 1.91, 2.54, 1.91],
+  ['Larghi', 2.54, 5.08, 2.54, 5.08],
+];
+const margins = ([, top, right, bottom, left]: (typeof MARGINS)[number]): PageMargins => ({
+  top: cmToPt(top),
+  right: cmToPt(right),
+  bottom: cmToPt(bottom),
+  left: cmToPt(left),
+  header: cmToPt(1.25),
+  footer: cmToPt(1.25),
+});
+/** Formati carta (Layout > Dimensioni), in verticale: con la pagina orizzontale si scambiano. */
+const PAPER: readonly [string, keyof typeof PAGE_SIZES][] = [
+  ['A4 (21 × 29,7 cm)', 'A4'],
+  ['A5 (14,8 × 21 cm)', 'A5'],
+  ['A3 (29,7 × 42 cm)', 'A3'],
+  ['Lettera (21,6 × 27,9 cm)', 'Letter'],
+  ['Legale (21,6 × 35,6 cm)', 'Legal'],
+];
+
 export const RIBBON_ITEMS: readonly UiRibbonItem[] = [
   // File ----------------------------------------------------------------
   item('file', 'File', 'file.new', 'Nuovo', { icon: '🗋' }),
   // `file.open` richiede i dati del file: la shell apre il selettore.
   item('file', 'File', 'file.open', 'Apri…', { icon: '📂' }),
+  item('file', 'File', 'file.export', 'Salva', { icon: '⤓', args: { formatId: 'docx' } }),
   item('file', 'Esporta', 'file.export', 'Word (.docx)', { icon: '⤓', args: { formatId: 'docx' } }),
   item('file', 'Esporta', 'file.export', 'HTML', { icon: '⤓', args: { formatId: 'html' } }),
   item('file', 'Esporta', 'file.export', 'Testo', { icon: '⤓', args: { formatId: 'txt' } }),
@@ -168,11 +198,15 @@ export const RIBBON_ITEMS: readonly UiRibbonItem[] = [
     kind: 'toggle',
     args: { part: 'footer', edit: true },
   }),
-  item('insert', 'Intestazione e piè di pagina', 'insert.field', 'Numero di pagina', { icon: '#', args: { kind: 'page' } }),
   item('insert', 'Testo', 'insert.field', 'Data', { icon: '📅', args: { kind: 'date' } }),
   item('insert', 'Testo', 'insert.field', 'Ora', { icon: '🕑', args: { kind: 'time' } }),
 
   // Layout --------------------------------------------------------------
+  item('layout', 'Imposta pagina', 'page.setup', 'Margini', {
+    icon: '▭',
+    kind: 'dropdown',
+    options: MARGINS.map((m) => ({ label: m[0], args: { page: { margins: margins(m) } } })),
+  }),
   item('layout', 'Imposta pagina', 'page.setup', 'Orientamento', {
     icon: '⤾',
     kind: 'dropdown',
@@ -180,6 +214,11 @@ export const RIBBON_ITEMS: readonly UiRibbonItem[] = [
       { label: 'Verticale', args: { page: { orientation: 'portrait' } } },
       { label: 'Orizzontale', args: { page: { orientation: 'landscape' } } },
     ],
+  }),
+  item('layout', 'Imposta pagina', 'page.setup', 'Dimensioni', {
+    icon: '▯',
+    kind: 'dropdown',
+    options: PAPER.map(([label, size]) => ({ label, args: { page: { ...PAGE_SIZES[size] } } })),
   }),
   item('layout', 'Imposta pagina', 'insert.sectionBreak', 'Interruzioni', {
     icon: '⤶',
@@ -209,6 +248,7 @@ export const RIBBON_ITEMS: readonly UiRibbonItem[] = [
   }),
   item('references', 'Note a piè di pagina', 'footnote.edit', 'Modifica nota…', {
     icon: '✎¹',
+    needsTarget: true,
     prompt: (ask) => {
       const text = ask('Nuovo testo della nota (cursore accanto al numero della nota):');
       return text === null ? undefined : { text };

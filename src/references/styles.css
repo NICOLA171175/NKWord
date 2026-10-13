@@ -108,3 +108,26 @@
   background: #2b579a;
   color: #fff;
 }
+
+/* Tema scuro (Visualizza > Tema): la finestra segue i colori dell'interfaccia. */
+@media screen {
+  :root[data-theme='dark'] .refs-dialog {
+    background: var(--ribbon-bg);
+  }
+
+  :root[data-theme='dark'] .refs-field input,
+  :root[data-theme='dark'] .refs-field select,
+  :root[data-theme='dark'] .refs-list,
+  :root[data-theme='dark'] .refs-buttons button:not(.refs-primary) {
+    border-color: var(--ribbon-border);
+    background: var(--chrome);
+    color: var(--text);
+  }
+
+  :root[data-theme='dark'] .refs-preview,
+  :root[data-theme='dark'] .refs-empty {
+    border-color: var(--ribbon-border);
+    background: var(--chrome);
+    color: var(--muted);
+  }
+}
