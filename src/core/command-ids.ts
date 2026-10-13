@@ -24,7 +24,7 @@ import type {
 } from './types';
 import type { Points } from './units';
 
-export type CommandOwner = 'core' | 'editing' | 'structures' | 'layout' | 'io' | 'ui';
+export type CommandOwner = 'core' | 'editing' | 'structures' | 'layout' | 'io' | 'ui' | 'comments';
 
 /** Argomenti di ogni comando (`void` = nessun argomento). */
 export interface CommandArgs {
@@ -110,6 +110,17 @@ export interface CommandArgs {
   'file.open': { data: FileData; formatId: string };
   'file.export': { formatId: string };
 
+  // comments: commenti a margine ---------------------------------------
+  /** Commenta la selezione (o la parola al cursore). */
+  'comment.insert': { text?: string; author?: string };
+  'comment.reply': { parentId: Id; text: string; author?: string };
+  'comment.edit': { id: Id; text: string };
+  /** Senza `id` elimina il commento al cursore. */
+  'comment.delete': { id?: Id };
+  'comment.resolve': { id: Id; resolved: boolean };
+  'comment.next': void;
+  'comment.previous': void;
+
   // ui: vista -----------------------------------------------------------
   'view.zoom': { zoom: number };
   'view.toggleFormattingMarks': void;
@@ -180,6 +191,13 @@ export const COMMAND_OWNERS: { readonly [K in CommandId]: CommandOwner } = {
   'file.new': 'io',
   'file.open': 'io',
   'file.export': 'io',
+  'comment.insert': 'comments',
+  'comment.reply': 'comments',
+  'comment.edit': 'comments',
+  'comment.delete': 'comments',
+  'comment.resolve': 'comments',
+  'comment.next': 'comments',
+  'comment.previous': 'comments',
   'view.zoom': 'ui',
   'view.toggleFormattingMarks': 'ui',
   'view.print': 'ui',

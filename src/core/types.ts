@@ -38,6 +38,11 @@ export interface CharFormat {
   readonly allCaps?: boolean;
   /** URL del collegamento ipertestuale. */
   readonly link?: string;
+  /**
+   * Commenti ancorati a questo testo: id di `DocumentModel.comments`
+   * separati da spazio (una stringa, così i run uguali si fondono).
+   */
+  readonly commentIds?: string;
 }
 
 export type Alignment = 'left' | 'center' | 'right' | 'justify';
@@ -322,6 +327,19 @@ export interface DocumentMetadata {
   readonly modified?: string;
 }
 
+/** Commento a margine. Le risposte hanno `parentId` e nessun ancoraggio proprio. */
+export interface Comment {
+  readonly id: Id;
+  readonly author: string;
+  readonly initials?: string;
+  /** Data ISO 8601. */
+  readonly date: string;
+  /** Testo semplice; '\n' separa i paragrafi. */
+  readonly text: string;
+  readonly parentId?: Id;
+  readonly resolved?: boolean;
+}
+
 export interface DocumentModel {
   readonly sections: readonly Section[];
   readonly styles: StyleSheet;
@@ -329,6 +347,8 @@ export interface DocumentModel {
   readonly metadata: DocumentMetadata;
   /** Risorse binarie (immagini) indicizzate per chiave, come data URI. */
   readonly media: Readonly<Record<string, string>>;
+  /** Commenti per id; il testo commentato porta l'id in `CharFormat.commentIds`. */
+  readonly comments?: Readonly<Record<Id, Comment>>;
 }
 
 // ---------------------------------------------------------------------------

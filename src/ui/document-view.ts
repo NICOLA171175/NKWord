@@ -62,6 +62,13 @@ export function charStyle(f: CharFormat, zoom: number): Partial<CSSStyleDeclarat
   return style;
 }
 
+/** Testo commentato: classe ed elenco degli id, per evidenziarlo e trovarlo. */
+function markComments(el: HTMLElement, f: CharFormat): void {
+  if (!f.commentIds) return;
+  el.classList.add('run-comment');
+  el.dataset.comments = f.commentIds;
+}
+
 function applyStyle(el: HTMLElement, style: Partial<CSSStyleDeclaration>): void {
   for (const [k, v] of Object.entries(style)) if (v) (el.style as unknown as Record<string, string>)[k] = v as string;
 }
@@ -233,6 +240,7 @@ export class DocumentView {
       el = document.createElement('span');
       el.textContent = run.kind === 'tab' ? '\t' : run.text;
       applyStyle(el, charStyle(run.format, zoom));
+      markComments(el, run.format);
     }
     el.classList.add('run', `run-${run.kind}`);
     el.style.left = px(run.x);
@@ -360,6 +368,7 @@ export class DocumentView {
         span.textContent = vs.formattingMarks ? text.replace(/ /g, '·') : text;
         applyStyle(span, charStyle(resolveCharFormat(sheet, p, inline), vs.zoom));
         if (inline.format.link) span.classList.add('run-link');
+        markComments(span, inline.format);
         return span;
       }
       case 'image': {

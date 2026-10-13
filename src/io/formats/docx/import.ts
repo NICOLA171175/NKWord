@@ -46,6 +46,7 @@ import { mimeFromExtension, toDataUri } from '../../util/encoding';
 import { child, elements, isElement, parseXml, textContent, type MarkupElement, type MarkupNode } from '../../util/markup';
 import { readZip, type ZipEntries } from '../../util/zip';
 import { defaultListLevel } from '../lists';
+import { COMMENTS_EXT_REL, COMMENTS_REL, readComments } from './comments';
 import { JC_FROM_DOCX, NS, numFmtFromDocx, REL, TAB_FROM_DOCX, underlineFromDocx } from './common';
 
 // ---------------------------------------------------------------------------
@@ -530,13 +531,28 @@ class Reader {
   /** Revisione del contenitore `w:ins`/`w:del` che si sta leggendo. */
   private revision: Revision | undefined;
   readonly media: Record<string, string> = {};
+  /** Commenti aperti (`w:commentRangeStart` senza ancora la fine), come id del modello. */
+  private readonly openComments: Id[] = [];
 
   constructor(
     private readonly pkg: Package,
     private readonly fmt: Formatter,
     private readonly styleIds: ReadonlyMap<string, Id>,
     private readonly listIds: ReadonlyMap<string, Id>,
+    private readonly commentAnchors: ReadonlyMap<string, Id> = new Map(),
   ) {}
+
+  /** Gestisce inizio/fine di un commento; restituisce false se l'elemento non lo è. */
+  private commentMark(el: MarkupElement): boolean {
+    const isStart = el.name === 'w:commentRangeStart';
+    if (!isStart && el.name !== 'w:commentRangeEnd') return false;
+    const id = this.commentAnchors.get(attr(el, 'w:id') ?? '');
+    if (!id) return true;
+    const i = this.openComments.indexOf(id);
+    if (isStart && i < 0) this.openComments.push(id);
+    else if (!isStart && i >= 0) this.openComments.splice(i, 1);
+    return true;
+  }
 
   private styleId(raw: string | undefined): Id | undefined {
     return raw ? this.styleIds.get(raw) ?? raw : undefined;
@@ -613,7 +629,8 @@ class Reader {
     const base = this.fmt.char(rPr);
     const rStyle = this.styleId(wVal(child(rPr, 'w:rStyle')));
     const effectiveLink = link ?? this.activeLink;
-    const format: CharFormat = effectiveLink ? { ...base, link: effectiveLink } : base;
+    const linked: CharFormat = effectiveLink ? { ...base, link: effectiveLink } : base;
+    const format: CharFormat = this.openComments.length ? { ...linked, commentIds: [...this.openComments].sort().join(' ') } : linked;
     const revision = this.revision;
     const push = (inline: Inline) => {
       if (!this.suppressed) out.push(revision ? { ...inline, revision } : inline);
@@ -701,7 +718,7 @@ class Reader {
 
   private inlineContainer(nodes: readonly MarkupNode[], part: Part, link: string | undefined, out: Inline[]): void {
     for (const c of nodes) {
-      if (!isElement(c)) continue;
+      if (!isElement(c) || this.commentMark(c)) continue;
       switch (c.name) {
         case 'w:r':
           this.run(c, part, link, out);
@@ -860,7 +877,7 @@ class Reader {
   /** Blocchi divisi per sezione: un `sectPr` nel pPr chiude la sezione corrente. */
   sectionGroups(nodes: readonly MarkupNode[], part: Part, groups: SectionGroup[] = [{ blocks: [] }]): SectionGroup[] {
     for (const c of nodes) {
-      if (!isElement(c)) continue;
+      if (!isElement(c) || this.commentMark(c)) continue;
       const current = groups[groups.length - 1]!;
       switch (c.name) {
         case 'w:p': {
@@ -997,7 +1014,14 @@ export async function importDocx(data: Uint8Array): Promise<DocumentModel> {
   const coreRel = pkg.findRel(pkgRels, REL.coreProps);
   const metadata = readCore(pkg.xml(coreRel?.target ?? 'docProps/core.xml'));
 
-  const reader = new Reader(pkg, fmt, styleIds, listIds);
+  const commentsRel = pkg.findRel(main, COMMENTS_REL);
+  const commentsExtRel = pkg.findRel(main, COMMENTS_EXT_REL);
+  const { comments, anchors } = readComments(
+    commentsRel ? pkg.xml(commentsRel.target) : undefined,
+    commentsExtRel ? pkg.xml(commentsExtRel.target) : undefined,
+  );
+
+  const reader = new Reader(pkg, fmt, styleIds, listIds, anchors);
   const body = child(documentRoot, 'w:body');
   const groups = reader.sectionGroups(body?.children ?? [], main);
   // L'ultimo gruppo vuoto senza sectPr (dopo un sectPr finale nel pPr) si scarta.
@@ -1005,5 +1029,12 @@ export async function importDocx(data: Uint8Array): Promise<DocumentModel> {
   if (groups.length > 1 && last && !last.blocks.length && !last.sectPr) groups.pop();
   const sections = inheritHeaders(groups.map((g) => reader.section(g, main)));
 
-  return { sections, styles: sheet, lists, metadata, media: reader.media };
+  return {
+    sections,
+    styles: sheet,
+    lists,
+    metadata,
+    media: reader.media,
+    ...(Object.keys(comments).length ? { comments } : {}),
+  };
 }

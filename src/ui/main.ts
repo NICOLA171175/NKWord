@@ -13,13 +13,16 @@ const found = import.meta.glob<Record<string, unknown>>(['../*/index.ts', '!../c
 const exportsList = Object.values(found);
 
 const editor = new Editor();
-for (const module of collectModules(exportsList, [UI_MODULE_ID])) editor.use(module);
+const modules = collectModules(exportsList, [UI_MODULE_ID]);
+for (const module of modules) editor.use(module);
 const ui = createUiModule();
 editor.use(ui);
 
 const root = document.getElementById('app');
 if (!root) throw new Error('Elemento #app mancante');
 const app = createApp(root, editor, { ui, ribbonItems: collectRibbonItems(exportsList) });
+// Un modulo con un metodo `mount(app)` aggiunge la propria interfaccia (es. il riquadro dei commenti).
+for (const module of modules) (module as { mount?: (host: typeof app) => unknown }).mount?.(app);
 
 editor.events.on('error', ({ commandId, error }) => console.error(`Comando ${commandId} fallito`, error));
 Object.assign(globalThis, { nikoffice: app });

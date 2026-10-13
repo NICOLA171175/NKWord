@@ -197,7 +197,9 @@ export function clearFormatting(state: EditorState): Transaction {
   for (const { paragraph: p } of paragraphsBetween(doc, start, end)) {
     const from = p.id === start.paragraphId ? start.offset : 0;
     const to = p.id === end.paragraphId ? end.offset : paragraphLength(p);
-    let next = mapFormatInRange(p, from, to, (format) => ({ format: format.link ? { link: format.link } : {} }));
+    let next = mapFormatInRange(p, from, to, (format) => ({
+      format: { ...(format.link ? { link: format.link } : {}), ...(format.commentIds ? { commentIds: format.commentIds } : {}) },
+    }));
     const { styleId: _s, markFormat: _m, ...rest } = next;
     next = { ...rest, format: p.format.list ? { list: p.format.list } : {} };
     doc = replaceBlock(doc, p.id, [next]);

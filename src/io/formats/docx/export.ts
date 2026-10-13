@@ -28,6 +28,17 @@ import { extensionFromMime, parseDataUri } from '../../util/encoding';
 import { escapeAttr, escapeText } from '../../util/markup';
 import { writeZip } from '../../util/zip';
 import {
+  COMMENTS_CT,
+  COMMENTS_EXT_CT,
+  COMMENTS_EXT_REL,
+  COMMENTS_REL,
+  commentMarks,
+  commentRangeEndXml,
+  commentRangeStartXml,
+  commentsExtendedXml,
+  commentsXml,
+} from './comments';
+import {
   BUILTIN_STYLE_NAMES,
   CONTENT_TYPES,
   JC_TO_DOCX,
@@ -121,7 +132,10 @@ class DocxWriter {
   private readonly anchors: ReadonlySet<string>;
   private bookmarkId = 0;
 
+  private readonly comments: ReturnType<typeof commentMarks>;
+
   constructor(private readonly doc: DocumentModel) {
+    this.comments = commentMarks(doc);
     this.anchors = internalAnchors(doc);
     let n = 1;
     for (const id of Object.keys(doc.lists)) this.numIds.set(id, n++);
@@ -261,11 +275,16 @@ class DocxWriter {
     let runs = '';
     let i = 0;
     const children = p.children;
+    const starts = this.comments?.starts.get(p.id);
+    const ends = this.comments?.ends.get(p.id);
+    // Run con gli eventuali inizi/fine di commento attorno.
+    const runXml = (index: number) =>
+      commentRangeStartXml(starts?.get(index)) + this.revisedInlineXml(children[index]!, rels) + commentRangeEndXml(ends?.get(index));
     while (i < children.length) {
       const c = children[i]!;
       const link = c.type === 'text' ? c.format.link : undefined;
       if (!link) {
-        runs += this.revisedInlineXml(c, rels);
+        runs += runXml(i);
         i++;
         continue;
       }
@@ -273,7 +292,7 @@ class DocxWriter {
       while (i < children.length) {
         const n = children[i]!;
         if (n.type !== 'text' || n.format.link !== link) break;
-        inner += this.revisedInlineXml(n, rels);
+        inner += runXml(i);
         i++;
       }
       runs += link.startsWith('#')
@@ -484,6 +503,10 @@ class DocxWriter {
     rels.add(REL.settings, 'settings.xml');
     const hasLists = Object.keys(this.doc.lists).length > 0;
     if (hasLists) rels.add(REL.numbering, 'numbering.xml');
+    if (this.comments) {
+      rels.add(COMMENTS_REL, 'comments.xml');
+      rels.add(COMMENTS_EXT_REL, 'commentsExtended.xml');
+    }
 
     // document.xml per primo: genera media, intestazioni e piè di pagina.
     const document = this.documentXml(rels);
@@ -492,6 +515,10 @@ class DocxWriter {
     this.addFile('word/styles.xml', this.stylesXml(), CONTENT_TYPES.styles);
     this.addFile('word/settings.xml', this.settingsXml(), CONTENT_TYPES.settings);
     if (hasLists) this.addFile('word/numbering.xml', this.numberingXml(), CONTENT_TYPES.numbering);
+    if (this.comments) {
+      this.addFile('word/comments.xml', commentsXml(this.comments.comments), COMMENTS_CT);
+      this.addFile('word/commentsExtended.xml', commentsExtendedXml(this.comments.comments), COMMENTS_EXT_CT);
+    }
     this.addFile('docProps/core.xml', this.coreXml(), CONTENT_TYPES.core);
 
     const pkgRels = new Rels();

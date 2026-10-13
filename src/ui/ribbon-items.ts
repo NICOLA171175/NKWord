@@ -225,6 +225,11 @@ export const RIBBON_ITEMS: readonly UiRibbonItem[] = [
     },
   }),
 
+  item('review', 'Commenti', 'comment.insert', 'Nuovo commento', { icon: '💬' }),
+  item('review', 'Commenti', 'comment.delete', 'Elimina', { icon: '🗑' }),
+  item('review', 'Commenti', 'comment.previous', 'Precedente', { icon: '◂' }),
+  item('review', 'Commenti', 'comment.next', 'Successivo', { icon: '▸' }),
+
   // Visualizza ----------------------------------------------------------
   item('view', 'Mostra', 'view.toggleFormattingMarks', 'Segni di formattazione', { icon: '¶', kind: 'toggle' }),
   item('view', 'Zoom', 'view.zoom', 'Zoom', {
