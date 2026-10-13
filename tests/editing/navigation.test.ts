@@ -67,8 +67,12 @@ describe('cursore e selezione', () => {
     select(editor, [p, 13]);
     editor.execute('edit.moveCaret', { direction: 'lineStart' });
     expect(focus(editor)[1]).toBe(11);
+    // Fine resta sulla riga (prima dello spazio finale), Maiusc+Fine seleziona anche lo spazio.
     select(editor, [p, 3]);
     editor.execute('edit.moveCaret', { direction: 'lineEnd' });
+    expect(focus(editor)[1]).toBe(10);
+    select(editor, [p, 3]);
+    editor.execute('edit.moveCaret', { direction: 'lineEnd', extend: true });
     expect(focus(editor)[1]).toBe(11);
   });
 

@@ -7,7 +7,8 @@
 import type { Command, CommandArgs, CommandId, Editor, EditorModule, EditorState } from '../core';
 import { find, replace } from './find';
 import { applyCharChange, applyToggle, clearFormatting, growSize, isToggleActive, setLink, shrinkSize, TOGGLES, MAX_FONT_SIZE, MIN_FONT_SIZE } from './format';
-import { moveCaret, selectAll, setSelection, type LineBounds } from './navigation';
+import { moveCaret, selectAll, setSelection, type LayoutNavigation, type LineBounds, type VerticalMove } from './navigation';
+import { lastCaretOffset, verticalTarget } from './vertical';
 import { applyStyle, isAlignActive, setBorders, setParaFormat, setShading, shiftIndent } from './paragraph';
 import { deleteBackward, deleteForward, deleteSelection, insertFragment, insertInline, insertText, splitParagraph } from './text';
 import { isCollapsed } from './selection';
@@ -20,8 +21,8 @@ function cmd<K extends CommandId>(id: K, def: Omit<EditingCommand<K>, 'id'>): Ed
 
 const hasSelection = ({ state }: { state: EditorState }) => !isCollapsed(state.selection);
 
-/** Comandi del modulo. `lineBounds` permette Inizio/Fine di riga sulle righe visive. */
-export function editingCommands(lineBounds?: LineBounds): Command<any>[] {
+/** Comandi del modulo. `nav` permette Inizio/Fine, Su/Giù e PagSu/PagGiù sulle righe visive. */
+export function editingCommands(nav: LayoutNavigation = {}): Command<any>[] {
   const toggle = (id: CommandId, key: keyof typeof TOGGLES, label: string) =>
     cmd(id as 'format.bold', {
       label,
@@ -52,7 +53,7 @@ export function editingCommands(lineBounds?: LineBounds): Command<any>[] {
     cmd('edit.setSelection', { label: 'Selezione', run: ({ state }, a) => setSelection(state, a.selection) }),
     cmd('edit.moveCaret', {
       label: 'Sposta cursore',
-      run: ({ state }, a) => moveCaret(state, a.direction, a.extend, lineBounds),
+      run: ({ state }, a) => moveCaret(state, a.direction, a.extend, nav, a.distance),
     }),
     cmd('edit.insertFragment', { label: 'Incolla', run: ({ state }, a) => insertFragment(state, a.fragment) }),
     cmd('edit.find', {
@@ -160,22 +161,38 @@ function layoutLineBounds(editor: Editor): LineBounds {
     const engine = editor.services.layout;
     if (!engine) return null;
     // Fra due righe (offset = fine dell'una = inizio dell'altra) vince la seconda.
-    let atEnd: [number, number] | null = null;
-    for (const page of engine.layout(doc).pages) {
-      for (const line of page.lines) {
-        if (line.paragraphId !== pos.paragraphId) continue;
-        if (line.start <= pos.offset && pos.offset < line.end) return [line.start, line.end];
-        if (pos.offset === line.end) atEnd = [line.start, line.end];
-      }
+    const lines = engine.layout(doc).pages.flatMap((page) => page.lines.filter((l) => l.paragraphId === pos.paragraphId));
+    let atEnd: [number, number, number] | null = null;
+    for (const line of lines) {
+      const bounds: [number, number, number] = [line.start, line.end, lastCaretOffset(lines, line)];
+      if (line.start <= pos.offset && pos.offset < line.end) return bounds;
+      if (pos.offset === line.end) atEnd = bounds;
     }
     return atEnd;
+  };
+}
+
+/**
+ * Su/Giù e PagSu/PagGiù sulle righe impaginate. Come in Word, premendo più
+ * volte di seguito il cursore torna alla colonna da cui era partito.
+ */
+function layoutVertical(editor: Editor): VerticalMove {
+  let goal: { readonly paragraphId: string; readonly offset: number; readonly x: number } | null = null;
+  return (doc, pos, dir, distance) => {
+    const engine = editor.services.layout;
+    if (!engine) return null;
+    const keep = goal && goal.paragraphId === pos.paragraphId && goal.offset === pos.offset ? goal.x : undefined;
+    const target = verticalTarget(engine, engine.layout(doc), pos, dir, keep, distance);
+    goal = target ? { ...target.focus, x: target.x } : null;
+    return target?.focus ?? null;
   };
 }
 
 export const editingModule: EditorModule = {
   id: 'editing',
   activate(editor) {
-    const disposers = editingCommands(layoutLineBounds(editor)).map((c) => editor.commands.register(c));
+    const nav = { lineBounds: layoutLineBounds(editor), vertical: layoutVertical(editor) };
+    const disposers = editingCommands(nav).map((c) => editor.commands.register(c));
     return () => disposers.forEach((d) => d());
   },
 };

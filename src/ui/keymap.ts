@@ -187,9 +187,15 @@ export function defaultKeybindings(mac = isMacPlatform()): Keybinding[] {
     { key: `${word}-Delete`, commandId: 'edit.deleteForward', args: { unit: 'word' } },
     { key: 'Mod-a', commandId: 'edit.selectAll' },
 
-    // Cursore (su/giù dipendono dall'impaginazione: non ci sono ancora comandi)
+    // Cursore
     ...caret('ArrowLeft', 'left'),
     ...caret('ArrowRight', 'right'),
+    ...caret('ArrowUp', 'lineUp'),
+    ...caret('ArrowDown', 'lineDown'),
+    ...caret('Mod-ArrowUp', 'paragraphUp'),
+    ...caret('Mod-ArrowDown', 'paragraphDown'),
+    ...caret('PageUp', 'pageUp'),
+    ...caret('PageDown', 'pageDown'),
     ...caret(`${word}-ArrowLeft`, 'wordLeft'),
     ...caret(`${word}-ArrowRight`, 'wordRight'),
     ...caret('Home', 'lineStart'),

@@ -213,6 +213,21 @@ export class DocumentView {
     this.element.remove();
   }
 
+  /** Scorre la vista quanto basta per mostrare il cursore (dopo i tasti di movimento e la digitazione). */
+  revealCaret(): void {
+    const caret = this.caretClientRect();
+    if (!caret) return;
+    const host = this.element.getBoundingClientRect();
+    const margin = Math.min(24, host.height / 4);
+    if (caret.top < host.top + margin) this.element.scrollTop -= host.top + margin - caret.top;
+    else if (caret.bottom > host.bottom - margin) this.element.scrollTop += caret.bottom - (host.bottom - margin);
+  }
+
+  /** Altezza visibile della vista in punti (per PagSu e PagGiù). */
+  visibleHeight(): number {
+    return pxToPt(this.element.clientHeight, this.view.state.zoom);
+  }
+
   /** Rettangolo del cursore sullo schermo (per posizionare l'input e l'IME). */
   caretClientRect(): DOMRect | null {
     return this.caretEl?.getBoundingClientRect() ?? null;

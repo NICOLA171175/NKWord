@@ -46,8 +46,24 @@ export interface CommandArgs {
   'edit.selectAll': void;
   'edit.setSelection': { selection: Selection };
   'edit.moveCaret': {
-    direction: 'left' | 'right' | 'wordLeft' | 'wordRight' | 'lineStart' | 'lineEnd' | 'docStart' | 'docEnd';
+    direction:
+      | 'left'
+      | 'right'
+      | 'wordLeft'
+      | 'wordRight'
+      | 'lineStart'
+      | 'lineEnd'
+      | 'docStart'
+      | 'docEnd'
+      | 'lineUp'
+      | 'lineDown'
+      | 'paragraphUp'
+      | 'paragraphDown'
+      | 'pageUp'
+      | 'pageDown';
     extend?: boolean;
+    /** PagSu/PagGiù: di quanti punti spostarsi (l'altezza della finestra). */
+    distance?: number;
   };
   /** Incolla un frammento già convertito (vedi `ClipboardService.parse`). */
   'edit.insertFragment': { fragment: DocumentModel };

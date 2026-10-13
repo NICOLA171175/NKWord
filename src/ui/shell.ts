@@ -170,6 +170,7 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
   hfBar.append(hfLabel, hfClose);
 
   const view = new DocumentView(editor, uiModule.view);
+  let revealOnChange = false;
   const sink = document.createElement('textarea');
   sink.className = 'input-sink';
   view.element.append(sink);
@@ -180,6 +181,17 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
       if (e.key === 'Escape' && part) {
         runFirstExecutable(editor, [{ commandId: 'page.headerFooter', args: { part, edit: false } }]);
         return true;
+      }
+      // PagSu/PagGiù: il cursore e la vista si spostano di una schermata, come in Word.
+      if ((e.key === 'PageUp' || e.key === 'PageDown') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const height = view.visibleHeight();
+        if (height > 0) {
+          const direction = e.key === 'PageUp' ? 'pageUp' : 'pageDown';
+          view.element.scrollTop += (direction === 'pageUp' ? -1 : 1) * view.element.clientHeight;
+          runFirstExecutable(editor, [{ commandId: 'edit.moveCaret', args: { direction, extend: e.shiftKey, distance: height } }]);
+          return true;
+        }
+        return false;
       }
       // Ctrl+S salva (in Word), Ctrl+O apre: il browser farebbe "Salva pagina" e "Apri file".
       const mod = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey;
@@ -219,7 +231,10 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
     hfLabel.textContent = part === 'header' ? 'Intestazione' : part === 'footer' ? 'Piè di pagina' : '';
     placeInput();
   };
-  view.element.addEventListener('mousedown', () => input.focus());
+  view.element.addEventListener('mousedown', () => {
+    revealOnChange = false;
+    input.focus();
+  });
   let menu: ContextMenu | null = null;
   const onContextMenu = (e: MouseEvent) => {
     menu?.close();
@@ -237,9 +252,23 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
     view.element.removeEventListener('contextmenu', onContextMenu);
     menu?.close();
   });
+  // Dopo un tasto (frecce, PagGiù, testo digitato) la vista segue il cursore.
+  const onKeyCapture = () => {
+    revealOnChange = true;
+  };
+  view.element.addEventListener('keydown', onKeyCapture, true);
+  view.element.addEventListener('input', onKeyCapture, true);
+  disposers.push(() => {
+    view.element.removeEventListener('keydown', onKeyCapture, true);
+    view.element.removeEventListener('input', onKeyCapture, true);
+  });
   disposers.push(
     editor.events.on('change', () => {
       updateTitle();
+      if (revealOnChange) {
+        revealOnChange = false;
+        view.revealCaret();
+      }
       placeInput();
     }),
     uiModule.view.events.on('change', onViewChange),
