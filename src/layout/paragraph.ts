@@ -235,6 +235,27 @@ function buildAtoms(doc: DocumentModel, p: Paragraph, measurer: TextMeasurer, fi
   return atoms;
 }
 
+/**
+ * Larghezza del testo dopo una tabulazione decimale fino al separatore
+ * decimale (la virgola; il punto se nel testo non ci sono virgole), oppure
+ * `undefined` se non c'è: allora il testo si allinea a destra, come in Word.
+ */
+function decimalOffset(atoms: readonly Atom[], from: number, measurer: TextMeasurer): number | undefined {
+  let to = from;
+  let text = '';
+  while (to < atoms.length && atoms[to]!.kind !== 'tab' && atoms[to]!.kind !== 'break') text += atoms[to++]!.text;
+  const sep = text.includes(',') ? ',' : '.';
+  if (!text.includes(sep)) return undefined;
+  let w = 0;
+  for (let j = from; j < to; j++) {
+    const a = atoms[j]!;
+    const k = a.kind === 'text' ? a.text.indexOf(sep) : -1;
+    if (k >= 0) return w + measurer.measure(a.text.slice(0, k), a.format).width;
+    w += a.width;
+  }
+  return undefined;
+}
+
 function nextTabStop(x: Points, tabs: readonly TabStop[] | undefined): TabStop {
   const custom = (tabs ?? []).filter((t) => t.position > x + 0.01).sort((a, b) => a.position - b.position)[0];
   if (custom) return custom;
@@ -330,7 +351,8 @@ export function layoutParagraph(
           for (let j = i + 1; j < atoms.length && atoms[j]!.kind !== 'tab' && atoms[j]!.kind !== 'break'; j++) {
             follow += atoms[j]!.width;
           }
-          if (stop.align === 'right' || stop.align === 'decimal') w -= follow;
+          if (stop.align === 'decimal') w -= decimalOffset(atoms, i + 1, measurer) ?? follow;
+          else if (stop.align === 'right') w -= follow;
           else w -= follow / 2;
         }
         a.width = Math.max(0, w);

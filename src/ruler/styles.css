@@ -1,0 +1,201 @@
+/* Righello orizzontale (vedi view.ts). Colori dalle variabili del tema. */
+
+.ruler-bar {
+  --ruler-bg: #c9c9c9;
+  --ruler-text-bg: #ffffff;
+  --ruler-ink: #4a4a4a;
+  --ruler-tab: #111111;
+  --ruler-marker: #f7f7f7;
+  --ruler-marker-border: #6b6b6b;
+  display: flex;
+  align-items: stretch;
+  flex: none;
+  height: 26px;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--ribbon-border);
+  user-select: none;
+}
+
+.ruler-bar[hidden] {
+  display: none;
+}
+
+.ruler-tab-type {
+  flex: none;
+  width: 22px;
+  height: 18px;
+  margin: 3px 4px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  background: var(--ribbon-bg);
+  border: 1px solid var(--ribbon-border);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.ruler-tab-type:hover {
+  border-color: var(--accent);
+}
+
+.ruler-tab-glyph path {
+  fill: none;
+  stroke: var(--ruler-tab);
+  stroke-width: 2;
+}
+
+.ruler-tab-type .ruler-tab-glyph path {
+  stroke: var(--icon);
+}
+
+.ruler-track {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.ruler-strip {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  height: 22px;
+  cursor: default;
+}
+
+.ruler-body {
+  position: absolute;
+  inset: 4px 0 4px 0;
+  background: var(--ruler-bg);
+  border-radius: 1px;
+}
+
+.ruler-text-area {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--ruler-text-bg);
+}
+
+.ruler-ticks,
+.ruler-marks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ruler-marks > * {
+  pointer-events: auto;
+}
+
+.ruler-tick {
+  position: absolute;
+  top: 10px;
+  width: 1px;
+  height: 2px;
+  background: var(--ruler-ink);
+}
+
+.ruler-tick-half {
+  top: 8px;
+  height: 6px;
+}
+
+.ruler-number {
+  position: absolute;
+  top: 5px;
+  transform: translateX(-50%);
+  font-size: 9px;
+  line-height: 12px;
+  color: var(--ruler-ink);
+}
+
+.ruler-default-tab {
+  position: absolute;
+  top: 19px;
+  width: 1px;
+  height: 3px;
+  background: #8a8a8a;
+}
+
+.ruler-margin-handle {
+  position: absolute;
+  top: 4px;
+  height: 14px;
+  width: 8px;
+  margin-left: -4px;
+  cursor: ew-resize;
+}
+
+.ruler-marker,
+.ruler-tab {
+  position: absolute;
+  width: 9px;
+  margin-left: -4.5px;
+  line-height: 0;
+  cursor: default;
+}
+
+.ruler-marker svg path {
+  fill: var(--ruler-marker);
+  stroke: var(--ruler-marker-border);
+  stroke-width: 1;
+}
+
+.ruler-marker:hover svg path {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+}
+
+.ruler-first {
+  top: 0;
+}
+
+.ruler-hanging,
+.ruler-right {
+  top: 11px;
+}
+
+.ruler-left {
+  top: 17px;
+}
+
+.ruler-tab {
+  top: 11px;
+}
+
+.ruler-tab.dragging .ruler-tab-glyph path {
+  stroke: var(--accent);
+}
+
+.ruler-tab.removing {
+  opacity: 0.35;
+}
+
+.ruler-guide {
+  position: fixed;
+  z-index: 50;
+  width: 0;
+  border-left: 1px dashed #555;
+  pointer-events: none;
+}
+
+@media screen {
+  :root[data-theme='dark'] .ruler-bar {
+    --ruler-bg: #6e6e6e;
+    --ruler-text-bg: #d4d4d4;
+    --ruler-ink: #1f1f1f;
+    --ruler-marker: #e6e6e6;
+    --ruler-marker-border: #9a9a9a;
+  }
+
+  :root[data-theme='dark'] .ruler-guide {
+    border-left-color: #bbb;
+  }
+}
+
+@media print {
+  .ruler-bar,
+  .ruler-guide {
+    display: none !important;
+  }
+}
