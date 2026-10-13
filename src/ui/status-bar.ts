@@ -45,7 +45,21 @@ export class StatusBar {
     });
     this.zoomLabel = document.createElement('span');
     this.zoomLabel.className = 'status-zoom-label';
-    this.element.append(this.pages, this.words, spacer, this.zoom, this.zoomLabel);
+    const step = (label: string, title: string, delta: number) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'status-zoom-button';
+      b.textContent = label;
+      b.title = title;
+      b.setAttribute('aria-label', title);
+      b.addEventListener('mousedown', (e) => e.preventDefault());
+      b.addEventListener('click', () => {
+        const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(this.view.state.zoom * 10 + delta) / 10));
+        runFirstExecutable(editor, [{ commandId: 'view.zoom', args: { zoom } }]);
+      });
+      return b;
+    };
+    this.element.append(this.pages, this.words, spacer, step('−', 'Riduci', -1), this.zoom, step('+', 'Ingrandisci', 1), this.zoomLabel);
     this.cleanup.push(
       editor.events.on('change', () => this.refresh()),
       view.events.on('change', () => this.refresh()),

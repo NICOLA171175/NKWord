@@ -8,6 +8,7 @@ import type { Editor } from '../core';
 import { sameArgs, type Keymap } from './keymap';
 import type { UiModule } from './module';
 import { extensionIsActive, onExtensionsChange } from './extensions';
+import { buttonSize, iconSvg } from './icons';
 import { RIBBON_ITEMS, RIBBON_TABS, type RibbonTab, type UiRibbonItem } from './ribbon-items';
 import { charFormatAtCaret, paraFormatAtCaret, styleIdAtCaret } from './selection-format';
 
@@ -126,7 +127,9 @@ export class Ribbon {
       }
       const element = item.kind === 'dropdown' && item.options ? this.renderSelect(item) : this.renderButton(item);
       element.dataset.command = item.commandId;
-      body.append(element);
+      body.append(element instanceof HTMLSelectElement && item.icon ? this.wrapSelect(item, element) : element);
+      // Pulsanti piccoli o galleria: disposti in righe invece che in colonne.
+      if (item.commandId === 'style.apply' || buttonSize(item) === 'icon') body.parentElement!.classList.add('ribbon-group--rows');
       this.controls.push({ item, element });
     }
     this.refresh();
@@ -135,16 +138,22 @@ export class Ribbon {
   private renderButton(item: UiRibbonItem): HTMLButtonElement {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'ribbon-button';
     const shortcut = this.options.keymap?.shortcutFor(item.commandId, item.args);
     b.title = shortcut ? `${item.label} (${shortcut})` : item.label;
     b.setAttribute('aria-label', item.label);
-    if (item.icon) {
-      const icon = document.createElement('span');
-      icon.className = 'ribbon-icon';
-      icon.textContent = item.icon;
-      icon.setAttribute('aria-hidden', 'true');
-      b.append(icon);
+    if (item.commandId === 'style.apply') {
+      // Galleria degli stili: anteprima del testo con lo stile applicato.
+      b.className = 'ribbon-button ribbon-style';
+      const preview = document.createElement('span');
+      preview.className = 'ribbon-style-preview';
+      preview.dataset.style = (item.args as { styleId?: string } | undefined)?.styleId ?? '';
+      preview.textContent = 'AaBbCc';
+      preview.setAttribute('aria-hidden', 'true');
+      b.append(preview);
+    } else {
+      const icon = this.renderIcon(item);
+      b.className = `ribbon-button ribbon-button--${icon ? buttonSize(item) : 'small'}`;
+      if (icon) b.append(icon);
     }
     const label = document.createElement('span');
     label.className = 'ribbon-label';
@@ -154,6 +163,42 @@ export class Ribbon {
     b.addEventListener('mousedown', (e) => e.preventDefault());
     b.addEventListener('click', () => this.invoke(item));
     return b;
+  }
+
+  /** Icona SVG del set, o in mancanza il testo `icon` della voce. */
+  private renderIcon(item: UiRibbonItem): Element | null {
+    const svg = iconSvg(item);
+    if (svg) return svg;
+    if (!item.icon) return null;
+    const icon = document.createElement('span');
+    icon.className = 'ribbon-icon';
+    icon.textContent = item.icon;
+    icon.setAttribute('aria-hidden', 'true');
+    return icon;
+  }
+
+  /**
+   * Menu a tendina con icona: si presenta come un pulsante (icona, etichetta,
+   * freccia) con il menu nativo trasparente sopra, che resta il controllo vero.
+   */
+  private wrapSelect(item: UiRibbonItem, select: HTMLSelectElement): HTMLElement {
+    const size = buttonSize(item);
+    const wrap = document.createElement('div');
+    wrap.className = `ribbon-dropdown ribbon-button--${size}`;
+    wrap.title = item.label;
+    const icon = this.renderIcon(item);
+    if (icon) wrap.append(icon);
+    const label = document.createElement('span');
+    label.className = 'ribbon-label';
+    label.textContent = item.label;
+    const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    chevron.setAttribute('viewBox', '0 0 10 10');
+    chevron.setAttribute('class', 'ribbon-chevron');
+    chevron.setAttribute('aria-hidden', 'true');
+    chevron.innerHTML = '<path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>';
+    select.classList.add('ribbon-select-overlay');
+    wrap.append(label, chevron, select);
+    return wrap;
   }
 
   private renderSelect(item: UiRibbonItem): HTMLSelectElement {

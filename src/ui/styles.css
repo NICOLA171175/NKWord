@@ -1,15 +1,21 @@
 :root {
-  --accent: #2b579a;
-  --accent-dark: #1e3f73;
-  --ribbon-bg: #f3f3f3;
-  --ribbon-border: #d6d6d6;
-  --canvas: #e6e6e6;
-  --text: #252525;
-  --muted: #605e5c;
-  --hover: #e1e1e1;
-  --pressed: #c8d7ee;
+  --accent: #185abd;
+  --accent-dark: #124a9e;
+  --accent-soft: #e8f0fb;
+  --title-bg: #185abd;
+  --chrome: #f3f3f3;
+  --ribbon-bg: #ffffff;
+  --ribbon-border: #e1dfdd;
+  --canvas: #e9e9e9;
+  --text: #242424;
+  --muted: #616161;
+  --icon: #424242;
+  --hover: #f0f0f0;
+  --pressed: #dbe7f8;
+  --pressed-border: #a9c4ef;
   --selection: rgba(51, 120, 214, 0.3);
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --radius: 4px;
+  font-family: 'Segoe UI', 'Segoe UI Variable Text', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
   color: var(--text);
 }
 
@@ -31,34 +37,66 @@ body,
   background: var(--canvas);
 }
 
+/* Barra del titolo ------------------------------------------------------- */
+
 .title-bar {
-  background: var(--accent);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  flex: none;
+  padding: 0 48px;
+  background: var(--title-bg);
   color: #fff;
-  font-size: 12px;
-  padding: 6px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Logo dell'app, come la "W" di Word. */
+.title-bar::before {
+  content: 'N';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  background: #fff;
+  color: var(--title-bg);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 22px;
   text-align: center;
 }
 
 /* Barra multifunzione ---------------------------------------------------- */
 
 .ribbon {
-  background: var(--ribbon-bg);
-  border-bottom: 1px solid var(--ribbon-border);
+  flex: none;
+  background: var(--chrome);
+  padding-bottom: 8px;
+  box-shadow: 0 1px 0 var(--ribbon-border);
 }
 
 .ribbon-tabs {
   display: flex;
   gap: 2px;
-  background: var(--accent);
-  padding: 0 8px;
+  padding: 4px 8px 2px;
   overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .ribbon-tab {
+  position: relative;
   border: 0;
+  border-radius: var(--radius);
   background: transparent;
-  color: #fff;
-  padding: 6px 14px;
+  color: var(--text);
+  padding: 7px 12px 8px;
   font: inherit;
   font-size: 13px;
   cursor: pointer;
@@ -66,101 +104,348 @@ body,
 }
 
 .ribbon-tab:hover {
-  background: var(--accent-dark);
+  background: #e6e6e6;
 }
 
 .ribbon-tab[aria-selected='true'] {
-  background: var(--ribbon-bg);
   color: var(--accent);
+  font-weight: 600;
+}
+
+.ribbon-tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 22px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: translateX(-50%);
+}
+
+.ribbon-tab:focus-visible,
+.ribbon-button:focus-visible,
+.ribbon-dropdown:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .ribbon-panel {
   display: flex;
   align-items: stretch;
-  min-height: 92px;
-  padding: 4px 4px 0;
+  margin: 0 8px;
+  padding: 6px 4px 0;
+  background: var(--ribbon-bg);
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.08);
   overflow-x: auto;
 }
 
 .ribbon-group {
+  position: relative;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--ribbon-border);
-  padding: 0 6px;
+  flex: none;
+  padding: 0 8px;
 }
 
+.ribbon-group + .ribbon-group::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 10px;
+  width: 1px;
+  background: var(--ribbon-border);
+}
+
+/* Di norma i pulsanti piccoli si impilano in colonne da tre, come in Word. */
 .ribbon-group-body {
   flex: 1;
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
   align-content: flex-start;
-  gap: 2px;
-  max-width: 340px;
+  gap: 2px 4px;
+  height: 80px;
+}
+
+/* Gruppi di sole icone (Carattere, Paragrafo) e galleria degli stili: in righe. */
+.ribbon-group--rows .ribbon-group-body {
+  flex-direction: row;
+  align-items: center;
+  max-width: 300px;
 }
 
 .ribbon-group-title {
   font-size: 11px;
   color: var(--muted);
   text-align: center;
-  padding: 2px 0 4px;
+  padding: 3px 0 5px;
   white-space: nowrap;
 }
 
-.ribbon-button {
+.ribbon-button,
+.ribbon-dropdown {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  height: 25px;
   border: 1px solid transparent;
-  border-radius: 3px;
+  border-radius: var(--radius);
   background: transparent;
   font: inherit;
   font-size: 12px;
-  padding: 3px 6px;
+  padding: 0 6px 0 4px;
   cursor: pointer;
   color: var(--text);
+  white-space: nowrap;
 }
 
-.ribbon-button:hover:not(:disabled) {
+.ribbon-button:hover:not(:disabled),
+.ribbon-dropdown:hover:not(:has(select:disabled)) {
   background: var(--hover);
+}
+
+.ribbon-button:active:not(:disabled) {
+  background: #e5e5e5;
 }
 
 .ribbon-button[aria-pressed='true'] {
   background: var(--pressed);
-  border-color: #9fb7dd;
+  border-color: var(--pressed-border);
 }
 
 .ribbon-button:disabled,
+.ribbon-dropdown:has(select:disabled),
 .ribbon-select:disabled {
   opacity: 0.4;
   cursor: default;
 }
 
-.ribbon-icon {
-  min-width: 16px;
-  text-align: center;
-  font-weight: 600;
+.ribbon-svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--icon);
 }
 
-/* Le voci del gruppo Carattere con icona breve mostrano solo l'icona. */
-.ribbon-group-body .ribbon-button[data-command^='format.'] .ribbon-label {
+.ribbon-svg .icon-bar {
+  stroke-width: 3;
+  stroke-linecap: butt;
+}
+
+.ribbon-svg .icon-bar-highlight {
+  stroke: #ffd400;
+}
+
+.ribbon-svg .icon-bar-color {
+  stroke: #d13438;
+}
+
+.ribbon-svg .icon-fill {
+  fill: var(--accent);
+  stroke: none;
+  opacity: 0.55;
+}
+
+.ribbon-svg .icon-squiggle {
+  stroke: #d13438;
+}
+
+.ribbon-icon {
+  min-width: 18px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--icon);
+}
+
+/* Pulsante grande: icona sopra l'etichetta. */
+.ribbon-button--large {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4px;
+  height: 80px;
+  min-width: 54px;
+  max-width: 84px;
+  padding: 6px 6px 4px;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.ribbon-button--large .ribbon-svg {
+  width: 32px;
+  height: 32px;
+  stroke-width: 1.1;
+  color: var(--accent);
+}
+
+.ribbon-button--large .ribbon-icon {
+  font-size: 22px;
+  line-height: 32px;
+}
+
+.ribbon-button--large .ribbon-chevron {
+  margin-top: -2px;
+}
+
+/* Pulsante con sola icona: l'etichetta resta nel tooltip e per i lettori di schermo. */
+.ribbon-button--icon {
+  justify-content: center;
+  gap: 2px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 4px;
+}
+
+.ribbon-button--icon .ribbon-label {
   display: none;
+}
+
+/* Menu a tendina con icona: il menu nativo, trasparente, copre il pulsante. */
+.ribbon-select-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ribbon-chevron {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  color: var(--muted);
 }
 
 .ribbon-select {
   font: inherit;
   font-size: 12px;
-  height: 24px;
+  height: 26px;
   max-width: 150px;
+  padding: 0 4px;
+  border: 1px solid #d1d1d1;
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
 }
 
+.ribbon-select:hover:not(:disabled) {
+  border-color: #8a8886;
+}
+
+.ribbon-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.ribbon-select[data-command='format.fontFamily'] {
+  width: 140px;
+}
+
+.ribbon-select[data-command='format.fontSize'] {
+  width: 56px;
+}
+
+/* Gruppo Paragrafo: elenchi e rientri sopra, allineamenti sotto. */
+.ribbon-group--rows .ribbon-group-body:has([data-command='paragraph.align']) {
+  max-width: 184px;
+}
+
+.ribbon-group--rows [aria-label^='Allinea'],
+.ribbon-group--rows [aria-label='Centra'],
+.ribbon-group--rows [aria-label='Giustifica'],
+.ribbon-group--rows .ribbon-dropdown:has([data-command='paragraph.lineSpacing']) {
+  order: 1;
+}
+
+/* Galleria degli stili. */
+.ribbon-group--rows .ribbon-group-body:has(.ribbon-style) {
+  flex-wrap: nowrap;
+  max-width: none;
+  gap: 4px;
+}
+
+.ribbon-style {
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  width: 72px;
+  height: 64px;
+  padding: 4px;
+  border-color: var(--ribbon-border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.ribbon-style .ribbon-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.ribbon-style-preview {
+  font-family: Calibri, Carlito, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  line-height: 22px;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text);
+}
+
+.ribbon-style-preview[data-style='Heading1'] {
+  font-size: 15px;
+  color: #2f5496;
+}
+
+.ribbon-style-preview[data-style='Heading2'] {
+  font-size: 14px;
+  color: #2f5496;
+}
+
+.ribbon-style-preview[data-style='Heading3'] {
+  color: #1f3763;
+}
+
+.ribbon-style-preview[data-style='Title'] {
+  font-size: 18px;
+  font-family: 'Calibri Light', Carlito, 'Segoe UI', sans-serif;
+  letter-spacing: -0.5px;
+}
+
+/* Barra di intestazione e piè di pagina. */
 .hf-bar {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 4px 12px;
-  background: #fff4ce;
-  border-bottom: 1px solid #e0c97b;
+  padding: 6px 16px;
+  background: var(--accent-soft);
+  border-bottom: 1px solid #c7dbf5;
   font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.hf-bar button {
+  font: inherit;
+  font-weight: 400;
+  padding: 3px 10px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.hf-bar button:hover {
+  background: var(--accent);
+  color: #fff;
 }
 
 .hf-bar[hidden] {
@@ -179,15 +464,18 @@ body,
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 24px;
+  gap: 20px;
+  padding: 28px 24px 40px;
   cursor: text;
 }
 
 .page {
   position: relative;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 2px 6px rgba(0, 0, 0, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.06);
   flex: none;
 }
 
@@ -254,19 +542,23 @@ body,
 .context-menu {
   position: fixed;
   z-index: 100;
-  min-width: 180px;
-  padding: 4px 0;
+  min-width: 200px;
+  padding: 4px;
   background: #fff;
   border: 1px solid var(--ribbon-border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  border-radius: 8px;
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.14),
+    0 0 2px rgba(0, 0, 0, 0.12);
   font-size: 13px;
 }
 
 .context-menu-item {
   display: block;
   width: 100%;
-  padding: 5px 16px;
+  padding: 6px 12px;
   border: 0;
+  border-radius: var(--radius);
   background: none;
   color: var(--text);
   font: inherit;
@@ -290,7 +582,7 @@ body,
 
 .context-menu-separator {
   height: 1px;
-  margin: 4px 0;
+  margin: 4px 8px;
   background: var(--ribbon-border);
 }
 
@@ -406,19 +698,60 @@ body,
 .status-bar {
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: var(--accent);
-  color: #fff;
+  gap: 4px;
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  background: var(--chrome);
+  border-top: 1px solid var(--ribbon-border);
+  color: var(--muted);
   font-size: 12px;
-  padding: 3px 12px;
+}
+
+.status-pages,
+.status-words {
+  padding: 2px 8px;
+  border-radius: var(--radius);
+}
+
+.status-pages:hover,
+.status-words:hover {
+  background: #e6e6e6;
 }
 
 .status-spacer {
   flex: 1;
 }
 
+.status-zoom-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--icon);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.status-zoom-button:hover {
+  background: #e6e6e6;
+}
+
 .status-zoom {
-  width: 120px;
+  width: 110px;
+  accent-color: var(--accent);
+}
+
+.status-zoom-label {
+  min-width: 40px;
+  text-align: right;
 }
 
 @media print {
