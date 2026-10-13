@@ -90,6 +90,12 @@ export function eventKeyNames(event: KeyLike): string[] {
     m === 'Alt' ? event.altKey : m === 'Ctrl' ? event.ctrlKey : m === 'Meta' ? event.metaKey : event.shiftKey,
   );
   const names = new Set<string>();
+  // Il tasto '+' delle tastiere italiana e tedesca (accanto a Invio) per Word
+  // è il tasto '=' americano: Ctrl++ è pedice e Ctrl+Maiusc++ apice.
+  if (event.code === 'BracketRight' && (event.key === '+' || event.key === '*')) names.add([...mods, '='].join('-'));
+  // Dove '=' si scrive con Maiusc (Maiusc+0 sulla tastiera italiana), chi
+  // preme "Ctrl+=" preme in realtà Ctrl+Maiusc+0: vale come Ctrl+= (pedice).
+  if (event.key === '=' && event.shiftKey && event.code !== 'Equal') names.add([...mods.filter((m) => m !== 'Shift'), '='].join('-'));
   if (event.key && event.key !== 'Unidentified' && event.key !== 'Dead') {
     names.add([...mods, normalizeKeyName(event.key)].join('-'));
   }
@@ -198,6 +204,7 @@ export function defaultKeybindings(mac = isMacPlatform()): Keybinding[] {
     { key: 'Mod-i', commandId: 'format.italic' },
     { key: 'Mod-u', commandId: 'format.underline' },
     { key: 'Mod-=', commandId: 'format.subscript' },
+    { key: 'Mod-Shift-+', commandId: 'format.superscript' },
     { key: 'Mod-Shift-=', commandId: 'format.superscript' },
     { key: 'Mod-]', commandId: 'format.growFont' },
     { key: 'Mod-[', commandId: 'format.shrinkFont' },

@@ -6,10 +6,12 @@ import {
   createState,
   paragraph,
   textRun,
+  type CharFormat,
   type DocumentLayout,
   type LayoutEngine,
+  type LineBox,
 } from '../../src/core';
-import { DocumentView, selectionByParagraph } from '../../src/ui/document-view';
+import { DocumentView, runVerticalStyle, selectionByParagraph } from '../../src/ui/document-view';
 import { ViewStore } from '../../src/ui/view-state';
 
 afterEach(() => document.body.replaceChildren());
@@ -131,5 +133,33 @@ describe('DocumentView con impaginazione', () => {
     pages[1]!.querySelector('.run')!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0, clientX: 0, clientY: 0 }));
     expect(hits[0]![0]).toBe(1);
     expect(got).toEqual([{ selection: { anchor: { paragraphId: a.id, offset: 2 }, focus: { paragraphId: a.id, offset: 2 } } }]);
+  });
+});
+
+describe('posizione verticale dei run nella pagina impaginata', () => {
+  const line = { baseline: 12 } as LineBox;
+  const top = (f: CharFormat) => parseFloat(runVerticalStyle(f, line, 1).top);
+  const bottom = (f: CharFormat) => {
+    const v = runVerticalStyle(f, line, 1);
+    return parseFloat(v.top) + parseFloat(v.lineHeight);
+  };
+
+  it('il pedice scende sotto la linea di base, non resta in cima alla riga come un apice', () => {
+    const normale = { fontSize: 11 };
+    const pedice = { fontSize: 11, verticalAlign: 'subscript' } as const;
+    const apice = { fontSize: 11, verticalAlign: 'superscript' } as const;
+    expect(bottom(pedice)).toBeGreaterThan(bottom(normale));
+    expect(top(apice)).toBeLessThan(top(normale));
+    expect(top(pedice)).toBeGreaterThan(top(apice));
+  });
+
+  it('caratteri di dimensioni diverse condividono la stessa linea di base', () => {
+    const base = (f: CharFormat) => parseFloat(runVerticalStyle(f, line, 1).top) + 0.8 * parseFloat(runVerticalStyle(f, line, 1).lineHeight);
+    expect(base({ fontSize: 24 })).toBeCloseTo(base({ fontSize: 11 }), 5);
+  });
+
+  it('anche senza dimensione esplicita apice e pedice sono più piccoli', () => {
+    const view = runVerticalStyle({ verticalAlign: 'subscript' }, line, 1);
+    expect(parseFloat(view.lineHeight)).toBeLessThan(parseFloat(runVerticalStyle({}, line, 1).lineHeight));
   });
 });

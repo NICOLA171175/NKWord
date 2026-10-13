@@ -44,6 +44,23 @@ describe('Keymap', () => {
     expect(km.lookup(ev('b', { meta: true }, 'KeyB'))).toEqual([]);
   });
 
+  it('pedice e apice come in Word anche sulla tastiera italiana', () => {
+    const km = new Keymap(defaultKeybindings(false), false);
+    const cmd = (...a: Parameters<typeof ev>) => km.lookup(ev(...a))[0]?.commandId;
+    // Tastiera americana: Ctrl+= e Ctrl+Maiusc+= (che produce '+').
+    expect(cmd('=', { ctrl: true }, 'Equal')).toBe('format.subscript');
+    expect(cmd('+', { ctrl: true, shift: true }, 'Equal')).toBe('format.superscript');
+    // Tastiera italiana, tasto '+': Ctrl++ pedice, Ctrl+Maiusc++ (produce '*') apice.
+    expect(cmd('+', { ctrl: true }, 'BracketRight')).toBe('format.subscript');
+    expect(cmd('*', { ctrl: true, shift: true }, 'BracketRight')).toBe('format.superscript');
+    // Tastiera italiana, "Ctrl+=" scritto con Maiusc+0: pedice, non apice.
+    expect(cmd('=', { ctrl: true, shift: true }, 'Digit0')).toBe('format.subscript');
+    // Ctrl+Maiusc+8 sulla tastiera americana resta "mostra segni di formattazione".
+    expect(cmd('*', { ctrl: true, shift: true }, 'Digit8')).toBe('view.toggleFormattingMarks');
+    expect(km.shortcutFor('format.subscript')).toBe('Ctrl+=');
+    expect(km.shortcutFor('format.superscript')).toBe('Ctrl+Maiusc++');
+  });
+
   it('su macOS usa Cmd e Opzione per le parole', () => {
     const km = new Keymap(defaultKeybindings(true), true);
     expect(km.lookup(ev('b', { meta: true })).map((b) => b.commandId)).toEqual(['format.bold']);

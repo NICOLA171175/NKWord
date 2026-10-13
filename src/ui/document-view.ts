@@ -60,8 +60,69 @@ export function charStyle(f: CharFormat, zoom: number): Partial<CSSStyleDeclarat
     fontVariant: f.smallCaps ? 'small-caps' : '',
     textTransform: f.allCaps ? 'uppercase' : '',
   };
-  if (f.verticalAlign && f.verticalAlign !== 'baseline' && f.fontSize) style.fontSize = `${ptToPx(f.fontSize * 0.65, zoom)}px`;
+  if (f.verticalAlign && f.verticalAlign !== 'baseline') style.fontSize = `${ptToPx(scriptFontSize(f), zoom)}px`;
   return style;
+}
+
+// Stessi valori di src/layout/measure.ts (apice e pedice come in Word).
+const DEFAULT_SIZE = 11;
+const SCRIPT_SCALE = 0.65;
+
+function scriptFontSize(f: CharFormat): number {
+  return (f.fontSize ?? DEFAULT_SIZE) * SCRIPT_SCALE;
+}
+
+/** Spostamento della linea di base in punti (positivo = verso l'alto), come nell'impaginazione. */
+export function runBaselineShift(f: CharFormat): number {
+  const size = f.fontSize ?? DEFAULT_SIZE;
+  if (f.verticalAlign === 'superscript') return size * 0.33;
+  if (f.verticalAlign === 'subscript') return -size * 0.14;
+  return 0;
+}
+
+let metricsCtx: CanvasRenderingContext2D | null | undefined;
+const metricsCache = new Map<string, { ascent: number; descent: number }>();
+
+/**
+ * Ascendente e discendente (in px) del carattere con cui il browser disegna
+ * uno span con lo stile dato. Senza canvas (test) si usano proporzioni tipiche.
+ */
+function fontMetrics(style: Partial<CSSStyleDeclaration>, sizePx: number): { ascent: number; descent: number } {
+  const font = `${style.fontStyle || 'normal'} ${style.fontWeight || 'normal'} ${sizePx}px ${style.fontFamily || 'sans-serif'}`;
+  let m = metricsCache.get(font);
+  if (m) return m;
+  if (metricsCtx === undefined) {
+    try {
+      metricsCtx = document.createElement('canvas').getContext('2d');
+    } catch {
+      metricsCtx = null;
+    }
+  }
+  let ascent = sizePx * 0.8;
+  let descent = sizePx * 0.2;
+  if (metricsCtx) {
+    metricsCtx.font = font;
+    const tm = metricsCtx.measureText('Hg');
+    if (tm.fontBoundingBoxAscent) ascent = tm.fontBoundingBoxAscent;
+    if (tm.fontBoundingBoxDescent) descent = tm.fontBoundingBoxDescent;
+  }
+  m = { ascent, descent };
+  metricsCache.set(font, m);
+  return m;
+}
+
+/**
+ * Posizione verticale di un run di testo nella riga: la sua linea di base
+ * cade su quella della riga, alzata o abbassata per apice e pedice. Senza
+ * questo ogni run starebbe in cima alla riga e un pedice (più piccolo)
+ * sembrerebbe un apice.
+ */
+export function runVerticalStyle(f: CharFormat, line: LineBox, zoom: number): { top: string; lineHeight: string } {
+  const style = charStyle(f, zoom);
+  const sizePx = parseFloat(style.fontSize || '') || ptToPx(f.fontSize ?? DEFAULT_SIZE, zoom);
+  const { ascent, descent } = fontMetrics(style, sizePx);
+  const baseline = ptToPx(line.baseline - runBaselineShift(f), zoom);
+  return { top: `${baseline - ascent}px`, lineHeight: `${ascent + descent}px` };
 }
 
 /** Disegna un segno delle estensioni su uno span di testo (vista a scorrimento). */
@@ -281,6 +342,7 @@ export class DocumentView {
       el = document.createElement('span');
       el.textContent = run.kind === 'tab' ? '\t' : run.text;
       applyStyle(el, charStyle(run.format, zoom));
+      Object.assign(el.style, runVerticalStyle(run.format, line, zoom));
       markComments(el, run.format);
       if (run.format.link) el.dataset.link = run.format.link;
     }

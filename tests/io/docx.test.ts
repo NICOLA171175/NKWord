@@ -55,6 +55,22 @@ describe('DOCX: scrittura', () => {
 });
 
 describe('DOCX: andata e ritorno', () => {
+  it('conserva pedice e apice, anche col testo normale accanto', async () => {
+    const { createDocument, paragraph, textRun } = await import('../../src/core');
+    const original = createDocument([
+      paragraph([textRun('H'), textRun('2', { verticalAlign: 'subscript' }), textRun('O e x'), textRun('2', { verticalAlign: 'superscript' }), textRun(' fine', { verticalAlign: 'baseline' })]),
+    ]);
+    const doc = await docxFormat.import!(await docxFormat.export!(original));
+    const rs = runs(plainParagraphs(doc)[0]!);
+    expect(rs.map((r) => [r.text, r.format.verticalAlign ?? 'baseline'])).toEqual([
+      ['H', 'baseline'],
+      ['2', 'subscript'],
+      ['O e x', 'baseline'],
+      ['2', 'superscript'],
+      [' fine', 'baseline'],
+    ]);
+  });
+
   it('conserva testo, stili, formattazione, elenchi, tabelle, immagini, campi e sezioni', async () => {
     const original = richDocument();
     const doc = await docxFormat.import!(await docxFormat.export!(original));
