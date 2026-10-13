@@ -224,6 +224,76 @@ body,
   pointer-events: none;
 }
 
+/* Segni delle estensioni (es. errori di ortografia) nella vista impaginata. */
+.page-laid-out .text-mark {
+  position: absolute;
+  pointer-events: none;
+}
+
+.page-laid-out .mark-squiggle {
+  background:
+    linear-gradient(135deg, transparent 35%, var(--mark-color) 35% 60%, transparent 60%) 0 0 / 4px 100% repeat-x,
+    linear-gradient(45deg, transparent 35%, var(--mark-color) 35% 60%, transparent 60%) 2px 0 / 4px 100% repeat-x;
+}
+
+.page-laid-out .mark-underline {
+  border-bottom: 1px solid var(--mark-color);
+}
+
+.page-laid-out .mark-highlight {
+  background: var(--mark-color);
+  mix-blend-mode: multiply;
+}
+
+.para .text-mark {
+  text-decoration-skip-ink: none;
+  text-underline-offset: 2px;
+}
+
+/* Menu contestuale ------------------------------------------------------- */
+.context-menu {
+  position: fixed;
+  z-index: 100;
+  min-width: 180px;
+  padding: 4px 0;
+  background: #fff;
+  border: 1px solid var(--ribbon-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  font-size: 13px;
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 5px 16px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.context-menu-item:hover:not(:disabled),
+.context-menu-item:focus-visible {
+  background: var(--hover);
+  outline: none;
+}
+
+.context-menu-item:disabled {
+  color: var(--muted);
+}
+
+.context-menu-strong {
+  font-weight: 600;
+}
+
+.context-menu-separator {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--ribbon-border);
+}
+
 /* Modifica di intestazione e piè di pagina: corpo attenuato. */
 .doc-pages[data-header-footer='header'] .page-body-area,
 .doc-pages[data-header-footer='footer'] .page-body-area,

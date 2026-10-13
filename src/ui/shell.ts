@@ -4,7 +4,9 @@
  */
 
 import type { Editor } from '../core';
+import { ContextMenu, contextMenuItems } from './context-menu';
 import { DocumentView } from './document-view';
+import { viewExtensions } from './extensions';
 import { InputController, runFirstExecutable } from './input';
 import { Keymap, defaultKeybindings } from './keymap';
 import { createUiModule, type UiModule } from './module';
@@ -29,6 +31,8 @@ export interface App {
   readonly view: DocumentView;
   readonly input: InputController;
   readonly statusBar: StatusBar;
+  /** Menu contestuale aperto, se c'è. */
+  readonly contextMenu: ContextMenu | null;
   destroy(): void;
 }
 
@@ -53,6 +57,9 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
   }
   const keymap = options.keymap ?? new Keymap(defaultKeybindings());
   const uiModule = ui;
+  // Estensioni pubblicate dagli altri moduli (es. controllo ortografico).
+  const extensions = viewExtensions(editor);
+  for (const ext of extensions) for (const kb of ext.keybindings ?? []) disposers.push(keymap.add(kb));
 
   const app = document.createElement('div');
   app.className = 'app';
@@ -131,6 +138,23 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
     placeInput();
   };
   view.element.addEventListener('mousedown', () => input.focus());
+  let menu: ContextMenu | null = null;
+  const onContextMenu = (e: MouseEvent) => {
+    menu?.close();
+    const pos = view.positionAt(e.clientX, e.clientY, e.target as Node | null);
+    const items = pos ? contextMenuItems(editor, pos) : [];
+    if (!items.length) return;
+    e.preventDefault();
+    menu = new ContextMenu(items, e.clientX, e.clientY, () => {
+      menu = null;
+      input.focus();
+    });
+  };
+  view.element.addEventListener('contextmenu', onContextMenu);
+  disposers.push(() => {
+    view.element.removeEventListener('contextmenu', onContextMenu);
+    menu?.close();
+  });
   disposers.push(
     editor.events.on('change', () => {
       updateTitle();
@@ -153,6 +177,9 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
     view,
     input,
     statusBar,
+    get contextMenu() {
+      return menu;
+    },
     destroy() {
       input.destroy();
       ribbon.destroy();

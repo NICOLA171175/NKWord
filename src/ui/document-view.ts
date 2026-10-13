@@ -34,6 +34,7 @@ import {
   type Section,
   type Selection,
 } from '../core';
+import { collectMarks, onExtensionsChange, type TextMark } from './extensions';
 import { runFirstExecutable } from './input';
 import { TabLeaders } from './tab-leaders';
 import type { ViewState, ViewStore } from './view-state';
@@ -60,6 +61,21 @@ export function charStyle(f: CharFormat, zoom: number): Partial<CSSStyleDeclarat
   };
   if (f.verticalAlign && f.verticalAlign !== 'baseline' && f.fontSize) style.fontSize = `${ptToPx(f.fontSize * 0.65, zoom)}px`;
   return style;
+}
+
+/** Disegna un segno delle estensioni su uno span di testo (vista a scorrimento). */
+function applyMark(el: HTMLElement, mark: TextMark): void {
+  el.classList.add('text-mark', `mark-${mark.kind}`);
+  if (mark.className) el.classList.add(mark.className);
+  if (mark.kind === 'highlight') {
+    el.style.backgroundColor = mark.color;
+    return;
+  }
+  const lines = new Set(el.style.textDecorationLine.split(' ').filter(Boolean));
+  lines.add('underline');
+  el.style.textDecorationLine = [...lines].join(' ');
+  el.style.textDecorationStyle = mark.kind === 'squiggle' ? 'wavy' : 'solid';
+  el.style.textDecorationColor = mark.color;
 }
 
 /** Testo commentato: classe ed elenco degli id, per evidenziarlo e trovarlo. */
@@ -96,6 +112,7 @@ export class DocumentView {
   private cleanup: (() => void)[] = [];
   private layoutCache: { doc: DocumentModel; layout: DocumentLayout } | null = null;
   private dragging = false;
+  private marks = new Map<string, TextMark[]>();
 
   constructor(
     private readonly editor: Editor,
@@ -124,6 +141,7 @@ export class DocumentView {
       () => document.removeEventListener('mouseup', onUp),
       editor.events.on('change', () => this.render()),
       view.events.on('change', () => this.render()),
+      onExtensionsChange(editor, () => this.render()),
     );
     this.render();
   }
@@ -145,6 +163,13 @@ export class DocumentView {
     this.caretEl = null;
     this.pages.classList.toggle('show-marks', vs.formattingMarks);
     this.pages.dataset.headerFooter = vs.headerFooter ?? '';
+    this.marks = new Map();
+    for (const m of collectMarks(this.editor, state)) {
+      if (m.end <= m.start) continue;
+      const list = this.marks.get(m.paragraphId);
+      if (list) list.push(m);
+      else this.marks.set(m.paragraphId, [m]);
+    }
     const engine = this.editor.services.layout;
     if (engine) {
       if (this.layoutCache?.doc !== state.doc) this.layoutCache = { doc: state.doc, layout: engine.layout(state.doc) };
@@ -196,6 +221,19 @@ export class DocumentView {
         const r = document.createElement('div');
         r.className = 'selection-rect';
         Object.assign(r.style, { left: px(rect.x), top: px(rect.y), width: px(rect.width), height: px(rect.height) });
+        pageEls[page]?.append(r);
+      }
+    }
+    for (const mark of [...this.marks.values()].flat()) {
+      const from = { paragraphId: mark.paragraphId, offset: mark.start };
+      const to = { paragraphId: mark.paragraphId, offset: mark.end };
+      for (const { page, rect } of engine.selectionRects(layout, from, to)) {
+        const r = document.createElement('div');
+        r.className = `text-mark mark-${mark.kind}`;
+        if (mark.className) r.classList.add(mark.className);
+        r.style.setProperty('--mark-color', mark.color);
+        const h = mark.kind === 'highlight' ? rect.height : Math.min(rect.height, 3 / ptToPx(1, vs.zoom));
+        Object.assign(r.style, { left: px(rect.x), top: px(rect.y + rect.height - h), width: px(rect.width), height: px(h) });
         pageEls[page]?.append(r);
       }
     }
@@ -320,8 +358,10 @@ export class DocumentView {
     const { focus } = this.editor.state.selection;
     const caretAt = focus.paragraphId === p.id && vs.headerFooter === null ? focus.offset : -1;
     const [selStart, selEnd] = sel.get(p.id) ?? [-1, -1];
+    const marks = this.marks.get(p.id) ?? [];
+    const markCuts = marks.flatMap((m) => [m.start, m.end]);
     const cuts = (start: number, end: number) =>
-      [...new Set([start, caretAt, selStart, selEnd, end])].filter((n) => n >= start && n <= end).sort((a, b) => a - b);
+      [...new Set([start, caretAt, selStart, selEnd, ...markCuts, end])].filter((n) => n >= start && n <= end).sort((a, b) => a - b);
     const selected = (a: number, b: number) => selStart >= 0 && a >= selStart && b <= selEnd;
 
     let pos = 0;
@@ -344,6 +384,7 @@ export class DocumentView {
         span.dataset.pid = p.id;
         span.dataset.start = String(a);
         if (selected(a, b)) span.classList.add('selected');
+        if (inline.type === 'text') for (const m of marks) if (m.start <= a && b <= m.end) applyMark(span, m);
         el.append(span);
       }
       pos += len;

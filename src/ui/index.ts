@@ -9,3 +9,5 @@ export * from './document-view';
 export * from './status-bar';
 export * from './modules';
 export * from './shell';
+export * from './extensions';
+export * from './context-menu';

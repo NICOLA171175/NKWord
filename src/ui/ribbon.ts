@@ -7,6 +7,7 @@
 import type { Editor } from '../core';
 import { sameArgs, type Keymap } from './keymap';
 import type { UiModule } from './module';
+import { extensionIsActive, onExtensionsChange } from './extensions';
 import { RIBBON_ITEMS, RIBBON_TABS, type RibbonTab, type UiRibbonItem } from './ribbon-items';
 import { charFormatAtCaret, paraFormatAtCaret, styleIdAtCaret } from './selection-format';
 
@@ -70,6 +71,7 @@ export class Ribbon {
     this.cleanup.push(
       editor.events.on('change', () => this.refresh()),
       ui.view.events.on('change', () => this.refresh()),
+      onExtensionsChange(editor, () => this.refresh()),
     );
     this.renderPanel();
   }
@@ -220,6 +222,7 @@ export class Ribbon {
         break;
     }
     if (this.ui.isActive(item.commandId, item.args)) return true;
+    if (extensionIsActive(this.editor, item.commandId, item.args)) return true;
     return item.args === undefined || sameArgs(item.args, {}) ? this.editor.isActive(item.commandId) : false;
   }
 
@@ -243,6 +246,7 @@ export class Ribbon {
         index = options.findIndex((o) => this.ui.isActive('view.zoom', o.args));
         break;
       default:
+        index = options.findIndex((o) => extensionIsActive(this.editor, item.commandId, o.args));
         break;
     }
     return index >= 0 ? String(index) : '';
