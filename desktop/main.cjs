@@ -1,4 +1,4 @@
-// Finestra desktop di nikoffice (Electron): carica l'app già compilata in app/
+// Finestra desktop di NKoffice (Electron): carica l'app già compilata in app/
 // senza server né Node.js installato sul PC.
 const { app, BrowserWindow, Menu, shell } = require('electron');
 const path = require('path');
@@ -14,7 +14,7 @@ function creaFinestra() {
     width: 1280,
     height: 860,
     show: false,
-    title: 'nikoffice',
+    title: 'NKoffice',
     icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false },
   });

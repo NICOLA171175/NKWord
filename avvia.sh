@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Avvia nikoffice con un doppio clic (Linux e macOS).
+# Avvia NKoffice con un doppio clic (Linux e macOS).
 cd "$(dirname "$0")" || exit 1
 
 apri_link() {
@@ -43,7 +43,7 @@ if ! node tools/pacchetti-aggiornati.cjs; then
 fi
 
 echo
-echo "Avvio di nikoffice: il browser si aprirà da solo."
+echo "Avvio di NKoffice: il browser si aprirà da solo."
 echo "Per chiudere l'app chiudi questa finestra (o premi Ctrl+C)."
 echo
 npm run dev -- --open

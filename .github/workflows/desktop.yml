@@ -64,15 +64,15 @@ jobs:
           gh release delete ultima-versione --cleanup-tag --yes || true
           gh release create ultima-versione file/* \
             --target "${{ github.sha }}" \
-            --title "nikoffice - ultima versione" \
+            --title "NKoffice - ultima versione" \
             --latest \
             --notes "Programma pronto da installare, aggiornato automaticamente a ogni modifica.
 
           **Windows**
-          - nikoffice-installa.exe: installa nikoffice come un normale programma (collegamento sul desktop e nel menu Start).
-          - nikoffice-portable.exe: si avvia con un doppio clic, senza installare nulla (va bene anche da una chiavetta USB).
+          - NKoffice-installa.exe: installa NKoffice come un normale programma (collegamento sul desktop e nel menu Start).
+          - NKoffice-portable.exe: si avvia con un doppio clic, senza installare nulla (va bene anche da una chiavetta USB).
 
           **Mac**
-          - nikoffice-mac.dmg: apri il file e trascina nikoffice nella cartella Applicazioni.
+          - NKoffice-mac.dmg: apri il file e trascina NKoffice nella cartella Applicazioni.
 
           Il programma non è firmato digitalmente: al primo avvio Windows può mostrare l'avviso SmartScreen. Clicca \"Ulteriori informazioni\" e poi \"Esegui comunque\"."
