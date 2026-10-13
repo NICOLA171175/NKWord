@@ -1,0 +1,153 @@
+/* Finestra "Correzione automatica". */
+
+.autocorrect-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.autocorrect-dialog {
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 16px 20px;
+  background: #fff;
+  color: var(--text, #242424);
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  font: 13px 'Segoe UI', system-ui, sans-serif;
+}
+
+.autocorrect-dialog h2 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.autocorrect-dialog h3 {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.autocorrect-intro {
+  margin: 0 0 10px;
+  color: var(--muted, #616161);
+}
+
+.autocorrect-flags {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.autocorrect-check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.autocorrect-quote-style {
+  margin-left: 26px;
+}
+
+.autocorrect-entry {
+  display: flex;
+  gap: 8px;
+}
+
+.autocorrect-entry label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.autocorrect-entry label:first-child {
+  flex: 0 0 140px;
+}
+
+.autocorrect-entry label:last-child {
+  flex: 1;
+}
+
+.autocorrect-entry input,
+.autocorrect-quote-style select {
+  padding: 3px 6px;
+  font: inherit;
+  border: 1px solid #c8c8c8;
+  border-radius: 3px;
+}
+
+.autocorrect-list {
+  height: 170px;
+  margin-top: 6px;
+  overflow-y: auto;
+  border: 1px solid #c8c8c8;
+  border-radius: 3px;
+}
+
+.autocorrect-row {
+  display: flex;
+  gap: 8px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.autocorrect-row:hover {
+  background: var(--hover, #f0f0f0);
+}
+
+.autocorrect-row.selected {
+  background: var(--pressed, #dbe7f8);
+}
+
+.autocorrect-from {
+  /* "-->" deve leggersi come scritto, non come freccia disegnata dal font. */
+  font-variant-ligatures: none;
+  flex: 0 0 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.autocorrect-to {
+  flex: 1;
+}
+
+.autocorrect-list-buttons,
+.autocorrect-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.autocorrect-footer {
+  margin-top: 16px;
+}
+
+.autocorrect-btn {
+  min-width: 80px;
+  padding: 5px 12px;
+  font: inherit;
+  background: #f3f3f3;
+  border: 1px solid #c8c8c8;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.autocorrect-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.autocorrect-btn.primary {
+  color: #fff;
+  background: var(--accent, #185abd);
+  border-color: var(--accent, #185abd);
+}
