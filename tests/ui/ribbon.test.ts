@@ -85,15 +85,15 @@ describe('Ribbon', () => {
 
   it('chiede gli argomenti quando servono e annulla se l\'utente rinuncia', () => {
     const got: unknown[] = [];
-    const answers = ['https://example.com', null];
+    const answers = ['https://example.com/a.png', null];
     const { ribbon, button } = setup(
-      (e) => e.commands.register({ id: 'format.link', label: 'Link', run: (_c, args) => (got.push(args), null) }),
+      (e) => e.commands.register({ id: 'insert.image', label: 'Immagine', run: (_c, args) => (got.push(args), null) }),
       { ask: () => answers.shift() ?? null },
     );
     ribbon.selectTab('insert');
-    button('Collegamento…').click();
-    button('Collegamento…').click();
-    expect(got).toEqual([{ url: 'https://example.com' }]);
+    button('Immagine…').click();
+    button('Immagine…').click();
+    expect(got).toEqual([{ src: 'https://example.com/a.png', width: 200, height: 150 }]);
   });
 
   it('lascia alla shell i comandi con un gestore proprio', () => {

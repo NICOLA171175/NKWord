@@ -158,13 +158,6 @@ export const RIBBON_ITEMS: readonly UiRibbonItem[] = [
       return src ? { src, width: 200, height: 150 } : undefined;
     },
   }),
-  item('insert', 'Collegamenti', 'format.link', 'Collegamento…', {
-    icon: '🔗',
-    prompt: (ask) => {
-      const url = ask('Indirizzo:', 'https://');
-      return url === null ? undefined : { url: url || null };
-    },
-  }),
   item('insert', 'Intestazione e piè di pagina', 'page.headerFooter', 'Intestazione', {
     icon: '▔',
     kind: 'toggle',

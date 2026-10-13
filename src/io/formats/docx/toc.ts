@@ -8,7 +8,7 @@
  *   campo TOC, così Word li riconosce come sommario e li sa aggiornare.
  */
 
-import { paragraphs, type Block, type DocumentModel, type Paragraph, type StyleSheet } from '../../../core';
+import { paragraphs, updateParagraph, type Block, type DocumentModel, type Id, type Paragraph, type StyleSheet } from '../../../core';
 import { escapeAttr } from '../../util/markup';
 
 const BOOKMARK_PREFIX = '_Toc';
@@ -18,6 +18,27 @@ export function internalAnchors(doc: DocumentModel): Set<string> {
   const out = new Set<string>();
   for (const { paragraph: p } of paragraphs(doc)) {
     for (const c of p.children) if (c.type === 'text' && c.format.link?.startsWith(`#${BOOKMARK_PREFIX}`)) out.add(c.format.link.slice(1));
+  }
+  return out;
+}
+
+/**
+ * In lettura: i collegamenti `#nome` a un segnalibro diventano `#_Toc<id>`
+ * del paragrafo che lo contiene, così si possono seguire e risalvare anche
+ * se i paragrafi hanno id nuovi.
+ */
+export function relinkBookmarks(doc: DocumentModel, bookmarks: ReadonlyMap<string, Id>): DocumentModel {
+  if (!bookmarks.size) return doc;
+  let out = doc;
+  for (const { paragraph: p } of paragraphs(doc)) {
+    let changed = false;
+    const children = p.children.map((c) => {
+      const target = c.type === 'text' && c.format.link?.startsWith('#') ? bookmarks.get(c.format.link.slice(1)) : undefined;
+      if (!target || c.type !== 'text') return c;
+      changed = true;
+      return { ...c, format: { ...c.format, link: `#${BOOKMARK_PREFIX}${target}` } };
+    });
+    if (changed) out = updateParagraph(out, { ...p, children });
   }
   return out;
 }

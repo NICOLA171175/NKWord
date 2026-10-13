@@ -282,6 +282,7 @@ export class DocumentView {
       el.textContent = run.kind === 'tab' ? '\t' : run.text;
       applyStyle(el, charStyle(run.format, zoom));
       markComments(el, run.format);
+      if (run.format.link) el.dataset.link = run.format.link;
     }
     el.classList.add('run', `run-${run.kind}`);
     el.style.left = px(run.x);
@@ -417,7 +418,10 @@ export class DocumentView {
         const text = inline.text.slice(from, to);
         span.textContent = vs.formattingMarks ? text.replace(/ /g, '·') : text;
         applyStyle(span, charStyle(resolveCharFormat(sheet, p, inline), vs.zoom));
-        if (inline.format.link) span.classList.add('run-link');
+        if (inline.format.link) {
+          span.classList.add('run-link');
+          span.dataset.link = inline.format.link;
+        }
         markComments(span, inline.format);
         return span;
       }

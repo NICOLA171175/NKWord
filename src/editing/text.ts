@@ -11,6 +11,7 @@ import {
   paragraphs,
   replaceBlock,
   type Block,
+  type CharFormat,
   type DocumentModel,
   type EditorState,
   type Inline,
@@ -36,6 +37,27 @@ export function deleteSelection(state: EditorState): Transaction | null {
 }
 
 /**
+ * Come in Word, il testo scritto all'inizio o alla fine di un collegamento
+ * non ne fa parte: si toglie il collegamento (e lo stile "Hyperlink").
+ */
+function outsideLink(
+  state: EditorState,
+  p: Paragraph,
+  offset: number,
+  base: { format: CharFormat; styleId?: string },
+): { format: CharFormat; styleId?: string } {
+  const link = base.format.link;
+  if (!link || !isCollapsed(state.selection)) return base;
+  const before = offset > 0 ? formatAt(p, offset).format.link : undefined;
+  const after = offset < paragraphLength(p) ? formatAt(p, offset + 1).format.link : undefined;
+  if (before === link && after === link) return base;
+  const { link: _l, ...format } = base.format;
+  const style = base.styleId ? state.doc.styles.styles[base.styleId] : undefined;
+  const isHyperlink = style?.type === 'character' && /^hyperlink$/i.test(style.name);
+  return base.styleId && !isHyperlink ? { format, styleId: base.styleId } : { format };
+}
+
+/**
  * Inserisce testo al cursore, sostituendo la selezione. '\n' crea nuovi
  * paragrafi, '\t' tabulazioni. Il testo prende la formattazione del
  * carattere prima del cursore (o del primo carattere selezionato), più la
@@ -47,7 +69,7 @@ export function insertText(state: EditorState, text: string): Transaction | null
   const original = locate(state.doc, start.paragraphId).paragraph;
   const refOffset =
     !isCollapsed(state.selection) && start.offset < paragraphLength(original) ? start.offset + 1 : start.offset;
-  const base = formatAt(original, refOffset);
+  const base = outsideLink(state, original, start.offset, formatAt(original, refOffset));
   const format = { ...base.format, ...state.pendingFormat };
 
   const { doc, at } = removeSelection(state);

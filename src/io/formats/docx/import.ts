@@ -51,6 +51,7 @@ import { child, elements, isElement, parseXml, textContent, type MarkupElement, 
 import { readZip, type ZipEntries } from '../../util/zip';
 import { defaultListLevel } from '../lists';
 import { COMMENTS_EXT_REL, COMMENTS_REL, readComments } from './comments';
+import { relinkBookmarks } from './toc';
 import { JC_FROM_DOCX, NS, numFmtFromDocx, REL, TAB_FROM_DOCX, underlineFromDocx } from './common';
 
 // ---------------------------------------------------------------------------
@@ -545,6 +546,10 @@ class Reader {
   private currentNote: Id | undefined;
   /** Commenti aperti (`w:commentRangeStart` senza ancora la fine), come id del modello. */
   private readonly openComments: Id[] = [];
+  /** Segnalibri letti nel paragrafo corrente, in attesa del suo id. */
+  private readonly pendingBookmarks: string[] = [];
+  /** Paragrafo di ogni segnalibro, per ricollegare i collegamenti interni. */
+  readonly bookmarks = new Map<string, Id>();
   /** Forme e grafici letti nel paragrafo corrente, in attesa del suo id. */
   private readonly pendingDrawings: ReadDrawing[] = [];
   /** Forme e grafici con il paragrafo di ancoraggio, da collocare quando si conoscono i margini. */
@@ -806,6 +811,11 @@ class Reader {
         case 'w:sdt':
           this.inlineContainer(child(c, 'w:sdtContent')?.children ?? [], part, link, out);
           break;
+        case 'w:bookmarkStart': {
+          const name = attr(c, 'w:name');
+          if (name && name !== '_GoBack') this.pendingBookmarks.push(name);
+          break;
+        }
         case 'w:ins':
         case 'w:moveTo':
         case 'w:del':
@@ -843,6 +853,7 @@ class Reader {
     const revision = readRevision(child(markPr, 'w:ins') ?? child(markPr, 'w:del') ?? child(markPr, 'w:moveTo') ?? child(markPr, 'w:moveFrom'));
     const id = newId();
     for (const d of this.pendingDrawings.splice(0)) this.drawings.push({ ...d, anchor: id });
+    for (const name of this.pendingBookmarks.splice(0)) if (!this.bookmarks.has(name)) this.bookmarks.set(name, id);
     return {
       type: 'paragraph',
       id,
@@ -1098,7 +1109,7 @@ export async function importDocx(data: Uint8Array): Promise<DocumentModel> {
   if (groups.length > 1 && last && !last.blocks.length && !last.sectPr) groups.pop();
   const sections = inheritHeaders(groups.map((g) => reader.section(g, main)));
 
-  const doc: DocumentModel = {
+  const read: DocumentModel = {
     sections,
     styles: sheet,
     lists,
@@ -1107,6 +1118,7 @@ export async function importDocx(data: Uint8Array): Promise<DocumentModel> {
     ...(Object.keys(comments).length ? { comments } : {}),
     ...(Object.keys(reader.footnotes).length ? { footnotes: reader.footnotes } : {}),
   };
+  const doc = relinkBookmarks(read, reader.bookmarks);
   // Le forme si collocano rispetto alla pagina: i riferimenti ai margini usano quelli della sezione.
   if (!reader.drawings.length) return doc;
   const sectionOf = new Map<Id, number>();

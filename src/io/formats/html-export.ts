@@ -21,6 +21,7 @@ import {
 } from '../../core';
 import { escapeAttr, escapeText } from '../util/markup';
 import { borderCss, charFormatToCss, paraFormatToCss } from './css';
+import { internalAnchors } from './docx/toc';
 
 const HEADING_TAGS: Record<string, string> = { Heading1: 'h1', Heading2: 'h2', Heading3: 'h3' };
 
@@ -65,9 +66,12 @@ function wrapTags(content: string, f: CharFormat): string {
 
 class HtmlWriter {
   private readonly footnoteNumbers: ReadonlyMap<string, number>;
+  /** Paragrafi a cui puntano i collegamenti interni (`#_Toc<id>`): ricevono l'attributo id. */
+  private readonly anchors: ReadonlySet<string>;
 
   constructor(private readonly doc: DocumentModel) {
     this.footnoteNumbers = footnoteNumbers(doc);
+    this.anchors = internalAnchors(doc);
   }
 
   inline(inline: Inline): string {
@@ -118,6 +122,7 @@ class HtmlWriter {
 
   paragraphAttrs(p: Paragraph, includeListIndent: boolean): string {
     const attrs: string[] = [];
+    if (this.anchors.has(`_Toc${p.id}`)) attrs.push(`id="${escapeAttr(`_Toc${p.id}`)}"`);
     if (p.styleId && p.styleId !== STYLE_NORMAL) {
       attrs.push(`class="${cssClass(p.styleId)}"`, `data-style="${escapeAttr(p.styleId)}"`);
     }

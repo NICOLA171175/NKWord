@@ -30,15 +30,15 @@ function creaFinestra() {
   });
   finestra.maximize();
   finestra.once('ready-to-show', () => finestra.show());
-  // I link esterni si aprono nel browser, non dentro l'app.
+  // I link esterni si aprono nel browser (o nel programma di posta), non dentro l'app.
   finestra.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:/.test(url)) shell.openExternal(url);
+    if (/^(https?|mailto|ftp):/i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
   finestra.webContents.on('will-navigate', (evento, url) => {
     if (!url.startsWith('file:')) {
       evento.preventDefault();
-      if (/^https?:/.test(url)) shell.openExternal(url);
+      if (/^(https?|mailto|ftp):/i.test(url)) shell.openExternal(url);
     }
   });
   finestra.loadFile(path.join(__dirname, 'app', 'index.html'));

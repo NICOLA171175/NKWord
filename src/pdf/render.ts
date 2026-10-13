@@ -47,11 +47,29 @@ function decodeURIComponentSafe(s: string): string {
   }
 }
 
+/** Paragrafo di destinazione di un collegamento interno (`#_Toc<id>`), `''` per l'inizio del documento. */
+function internalTarget(link: string | undefined): string | null {
+  if (!link?.startsWith('#')) return null;
+  if (link.toLowerCase() === '#_top') return '';
+  return link.startsWith('#_Toc') ? link.slice(5) : null;
+}
+
+/** Pagina e altezza (dall'alto) della prima riga di ogni paragrafo. */
+function paragraphPositions(layout: DocumentLayout): Map<string, { page: number; top: number }> {
+  const out = new Map<string, { page: number; top: number }>();
+  for (const page of layout.pages) {
+    for (const line of page.lines) if (!out.has(line.paragraphId)) out.set(line.paragraphId, { page: page.index, top: line.y });
+  }
+  return out;
+}
+
 const isTextRun = (r: GlyphRun) => r.kind === 'text' || r.kind === 'field' || r.kind === 'listMarker';
 
 class PageCanvas {
   readonly ops: string[] = [];
   readonly links: { rect: [number, number, number, number]; uri: string }[] = [];
+  /** Collegamenti a un punto del documento: id del paragrafo ('' = inizio). */
+  readonly gotos: { rect: [number, number, number, number]; paragraphId: string }[] = [];
 
   constructor(
     private readonly page: PageLayout,
@@ -121,8 +139,11 @@ class PageCanvas {
     if (f.underline) this.rule(x, baseline + full * 0.12, decoWidth, thickness, color, f.underline);
     if (f.strike) this.rule(x, baseline - size * 0.3, decoWidth, thickness, color, 'single');
 
+    const rect: [number, number, number, number] = [x, this.y(line.y + line.height), x + decoWidth, this.y(line.y)];
     const uri = linkTarget(f.link);
-    if (uri) this.links.push({ rect: [x, this.y(line.y + line.height), x + decoWidth, this.y(line.y)], uri });
+    if (uri) this.links.push({ rect, uri });
+    const target = internalTarget(f.link);
+    if (target !== null) this.gotos.push({ rect, paragraphId: target });
   }
 
   private rule(x: number, top: number, width: number, thickness: number, color: string, style: NonNullable<CharFormat['underline']>): void {
@@ -210,11 +231,19 @@ export async function layoutToPdf(layout: DocumentLayout, options: PdfRenderOpti
   const resources = `<< /ProcSet [/PDF /Text /ImageB /ImageC /ImageI]${fontRefs.length ? ` /Font << ${fontRefs.join(' ')} >>` : ''}${xobjects.length ? ` /XObject << ${xobjects.join(' ')} >>` : ''} >>`;
   const resourcesId = writer.add(resources);
 
+  const positions = paragraphPositions(layout);
   layout.pages.forEach((page, i) => {
     const { id: contentId, canvas } = contents[i]!;
     const annots = canvas.links.map(({ rect, uri }) =>
       writer.add(`<< /Type /Annot /Subtype /Link /Rect [${rect.map(num).join(' ')}] /Border [0 0 0] /A << /S /URI /URI ${pdfString(uri)} >> >>`),
     );
+    for (const { rect, paragraphId } of canvas.gotos) {
+      const to = paragraphId ? positions.get(paragraphId) : { page: 0, top: 0 };
+      const toPage = to && layout.pages[to.page];
+      if (!to || !toPage) continue;
+      const dest = `[${ref(pageIds[to.page]!)} /XYZ null ${num(toPage.height - to.top)} null]`;
+      annots.push(writer.add(`<< /Type /Annot /Subtype /Link /Rect [${rect.map(num).join(' ')}] /Border [0 0 0] /Dest ${dest} >>`));
+    }
     writer.set(
       pageIds[i]!,
       `<< /Type /Page /Parent ${ref(pagesId)} /MediaBox [0 0 ${num(page.width)} ${num(page.height)}] /Resources ${ref(resourcesId)} /Contents ${ref(contentId)}${annots.length ? ` /Annots [${annots.map(ref).join(' ')}]` : ''} >>`,
