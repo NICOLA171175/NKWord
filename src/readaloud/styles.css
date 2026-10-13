@@ -1,0 +1,133 @@
+/*
+ * Lettura ad alta voce (vedi view.ts): barra mobile in alto a destra sul
+ * documento. I colori vengono dalle variabili dell'interfaccia, quindi
+ * seguono il tema chiaro o scuro.
+ */
+
+.readaloud-bar {
+  position: fixed;
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--ribbon-bg, #ffffff);
+  color: var(--text, #242424);
+  border: 1px solid var(--ribbon-border, #e1dfdd);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+}
+.readaloud-bar[hidden],
+.readaloud-panel[hidden],
+.readaloud-notice[hidden] {
+  display: none;
+}
+
+.readaloud-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius, 4px);
+  background: transparent;
+  color: var(--icon, #424242);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.readaloud-btn:hover {
+  background: var(--hover, #f0f0f0);
+}
+.readaloud-btn:active,
+.readaloud-btn.is-open {
+  background: var(--pressed, #dbe7f8);
+  border-color: var(--pressed-border, #a9c4ef);
+}
+.readaloud-play {
+  color: #fff;
+  background: var(--accent, #185abd);
+}
+.readaloud-play:hover {
+  background: var(--accent-dark, #124a9e);
+}
+
+.readaloud-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 260px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--ribbon-bg, #ffffff);
+  border: 1px solid var(--ribbon-border, #e1dfdd);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+.readaloud-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.readaloud-field-head {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+.readaloud-rate-value {
+  font-weight: 400;
+  color: var(--muted, #616161);
+}
+.readaloud-rate {
+  width: 100%;
+  accent-color: var(--accent, #185abd);
+}
+.readaloud-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted, #616161);
+}
+.readaloud-voice {
+  width: 100%;
+  padding: 4px;
+  font: inherit;
+  color: var(--text, #242424);
+  background: var(--ribbon-bg, #ffffff);
+  border: 1px solid var(--ribbon-border, #c8c6c4);
+  border-radius: var(--radius, 4px);
+}
+
+.readaloud-notice {
+  position: fixed;
+  z-index: 801;
+  max-width: 360px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 8px 10px 12px;
+  background: var(--ribbon-bg, #ffffff);
+  color: var(--text, #242424);
+  border: 1px solid var(--ribbon-border, #e1dfdd);
+  border-left: 4px solid #c19c00;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+}
+.readaloud-notice-close {
+  min-width: 24px;
+  height: 24px;
+  font-size: 12px;
+}
+
+@media print {
+  .readaloud-bar,
+  .readaloud-notice {
+    display: none !important;
+  }
+}
