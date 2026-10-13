@@ -26,6 +26,7 @@ const ICONS: Record<string, string> = {
   'file.new': PAGE + S('M8 11h4M10 9v4'),
   'file.open': S('M2.5 5.5v10h12.5l2.5-6.5H6L3.5 15.5') + S('M2.5 5.5V4h5l1.5 1.5H15V9'),
   'file.export': PAGE + S('M10 8v6.5M7.5 12l2.5 2.5 2.5-2.5'),
+  'recent.show': '<circle cx="10" cy="10" r="7"/>' + S('M10 6v4l2.5 2.5'),
   'view.print': S('M6 7V2.5h8V7') + '<rect x="2.5" y="7" width="15" height="7" rx="1.5"/>' + S('M6 11.5h8v6H6z'),
 
   'edit.undo': S('M7 4.5 3.5 8 7 11.5') + S('M3.5 8H12a4.5 4.5 0 0 1 0 9H8'),

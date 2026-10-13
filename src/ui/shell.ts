@@ -33,8 +33,44 @@ export interface App {
   readonly statusBar: StatusBar;
   /** Menu contestuale aperto, se c'è. */
   readonly contextMenu: ContextMenu | null;
+  /** Apre un file e avvisa chi ascolta `onFileOpened` (es. i documenti recenti). */
+  openFile(file: File, from?: FileOrigin): Promise<boolean>;
+  /** Mostra la finestra di scelta del file, come "Apri…". */
+  pickFile(): void;
+  /** Avvisa dopo ogni file aperto con successo. */
+  onFileOpened(listener: (opened: OpenedFile) => void): () => void;
   destroy(): void;
 }
+
+/** Maniglia di un file del disco (File System Access API, Chrome ed Edge). */
+export interface FileHandle {
+  readonly kind: 'file';
+  readonly name: string;
+  getFile(): Promise<File>;
+  isSameEntry?(other: FileHandle): Promise<boolean>;
+  queryPermission?(options: { mode: 'read' | 'readwrite' }): Promise<PermissionState>;
+  requestPermission?(options: { mode: 'read' | 'readwrite' }): Promise<PermissionState>;
+}
+
+/** Da dove viene un file aperto: la maniglia del browser o il percorso sul disco (programma desktop). */
+export interface FileOrigin {
+  readonly handle?: FileHandle;
+  readonly path?: string;
+}
+
+export interface OpenedFile extends FileOrigin {
+  readonly file: File;
+}
+
+type OpenFilePicker = (options: object) => Promise<FileHandle[]>;
+
+/** Tipi di file proposti dalla finestra "Apri". */
+const OPEN_TYPES = {
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+  'text/html': ['.html', '.htm'],
+  'text/plain': ['.txt', '.md'],
+  'application/pdf': ['.pdf'],
+};
 
 const TEXT_EXTENSIONS = new Set(['txt', 'html', 'htm', 'md', 'xml', 'rtf']);
 
@@ -75,18 +111,41 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.hidden = true;
-  fileInput.accept = '.docx,.html,.htm,.txt,.md,.pdf';
+  fileInput.accept = Object.values(OPEN_TYPES).flat().join(',');
+  const openedListeners = new Set<(opened: OpenedFile) => void>();
+  const openAndNotify = async (file: File, from: FileOrigin = {}) => {
+    const ok = await openFile(editor, file);
+    if (ok) for (const l of openedListeners) l({ file, ...from });
+    input.focus();
+    return ok;
+  };
   fileInput.addEventListener('change', () => {
     const file = fileInput.files?.[0];
     fileInput.value = '';
-    if (file) void openFile(editor, file).finally(() => input.focus());
+    if (file) void openAndNotify(file);
   });
+  // Nel browser che lo permette si tiene la maniglia del file, così si può
+  // riaprirlo dai documenti recenti; il programma desktop usa i percorsi.
+  const win = root.ownerDocument.defaultView as (Window & { showOpenFilePicker?: OpenFilePicker; nkofficeDesktop?: unknown }) | null;
+  const picker = win && !win.nkofficeDesktop ? win.showOpenFilePicker : undefined;
+  const pickFile = () => {
+    if (!picker) return fileInput.click();
+    picker
+      .call(win, { types: [{ description: 'Documenti', accept: OPEN_TYPES }] })
+      .then(async ([handle]) => {
+        if (handle) await openAndNotify(await handle.getFile(), { handle });
+      })
+      .catch((error: unknown) => {
+        // Finestra chiusa senza scegliere: niente da fare.
+        if ((error as { name?: string })?.name !== 'AbortError') console.error('Apertura non riuscita', error);
+      });
+  };
 
   const ribbon = new Ribbon(editor, uiModule, {
     ...(options.ribbonItems?.length ? { items: [...RIBBON_ITEMS, ...options.ribbonItems] } : {}),
     keymap,
     ask: options.ask,
-    handlers: { 'file.open': () => fileInput.click() },
+    handlers: { 'file.open': pickFile },
     afterAction: () => input.focus(),
   });
 
@@ -179,6 +238,12 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
     statusBar,
     get contextMenu() {
       return menu;
+    },
+    openFile: openAndNotify,
+    pickFile,
+    onFileOpened(listener) {
+      openedListeners.add(listener);
+      return () => openedListeners.delete(listener);
     },
     destroy() {
       input.destroy();

@@ -1,0 +1,93 @@
+.recent-panel {
+  position: absolute;
+  z-index: 50;
+  width: 380px;
+  max-width: calc(100vw - 16px);
+  max-height: 70vh;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #c8c6c4;
+  border-radius: 4px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  color: #242424;
+  font-size: 13px;
+  padding: 8px 0;
+}
+.recent-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 6px;
+}
+.recent-empty {
+  margin: 4px 12px 8px;
+  color: #616161;
+}
+.recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.recent-item {
+  display: flex;
+  align-items: center;
+}
+.recent-item:hover {
+  background: #f0f0f0;
+}
+.recent-panel button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.recent-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 6px 12px;
+  text-align: left;
+}
+.recent-name,
+.recent-where {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recent-name {
+  font-weight: 600;
+}
+.recent-where {
+  color: #616161;
+  font-size: 12px;
+}
+.recent-remove,
+.recent-close {
+  padding: 4px 8px;
+  color: #616161;
+  border-radius: 4px;
+}
+.recent-remove {
+  margin-right: 6px;
+  visibility: hidden;
+}
+.recent-item:hover .recent-remove,
+.recent-remove:focus-visible {
+  visibility: visible;
+}
+.recent-remove:hover,
+.recent-close:hover {
+  background: #e1dfdd;
+}
+.recent-clear {
+  margin: 6px 12px 0;
+  padding: 4px 0;
+  color: #185abd !important;
+}
+.recent-clear:hover {
+  text-decoration: underline;
+}
