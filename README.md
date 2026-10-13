@@ -4,7 +4,7 @@ Clone di Microsoft Word in TypeScript.
 
 ## Avvio con un doppio clic
 
-Serve [Node.js](https://nodejs.org) 20 o più recente (versione LTS). Poi, nella cartella del progetto:
+Serve [Node.js](https://nodejs.org) 22.12 o più recente (versione LTS). Poi, nella cartella del progetto:
 
 - **Windows**: doppio clic su `avvia.bat`.
 - **macOS**: doppio clic su `avvia.command`. La prima volta macOS può bloccarlo: clic destro sul file, *Apri*, poi *Apri* di nuovo.

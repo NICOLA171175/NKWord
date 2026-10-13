@@ -14,10 +14,10 @@ if errorlevel 1 (
   exit /b 1
 )
 
-for /f "tokens=1 delims=." %%v in ('node -p "process.versions.node"') do set NODE_MAJOR=%%v
-if %NODE_MAJOR% LSS 20 (
+node -e "const [a,b]=process.versions.node.split('.').map(Number);process.exit(a>22||(a===22&&b>=12)?0:1)"
+if errorlevel 1 (
   echo.
-  echo La versione di Node.js installata ^(%NODE_MAJOR%^) e' troppo vecchia: serve la 20 o piu' recente.
+  for /f %%v in ('node -p "process.versions.node"') do echo La versione di Node.js installata ^(%%v^) e' troppo vecchia: serve la 22.12 o piu' recente.
   echo Scarica e installa la versione LTS da https://nodejs.org, poi riapri questo file.
   echo.
   start "" https://nodejs.org
@@ -25,8 +25,9 @@ if %NODE_MAJOR% LSS 20 (
   exit /b 1
 )
 
-if not exist node_modules\vite\package.json (
-  echo Prima installazione: scarico i pacchetti necessari, attendi...
+node tools\pacchetti-aggiornati.cjs
+if errorlevel 1 (
+  echo Installo o aggiorno i pacchetti necessari, attendi...
   call npm install
   if errorlevel 1 (
     if exist node_modules rmdir /s /q node_modules

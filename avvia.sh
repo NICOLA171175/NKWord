@@ -22,17 +22,16 @@ if ! command -v node >/dev/null 2>&1; then
   attendi_e_esci
 fi
 
-NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]')
-if [ "$NODE_MAJOR" -lt 20 ]; then
+if ! node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>22||(a===22&&b>=12)?0:1)'; then
   echo
-  echo "La versione di Node.js installata ($NODE_MAJOR) è troppo vecchia: serve la 20 o più recente."
+  echo "La versione di Node.js installata ($(node -p 'process.versions.node')) è troppo vecchia: serve la 22.12 o più recente."
   echo "Scarica e installa la versione LTS da https://nodejs.org, poi riapri questo file."
   apri_link https://nodejs.org
   attendi_e_esci
 fi
 
-if [ ! -f node_modules/vite/package.json ]; then
-  echo "Prima installazione: scarico i pacchetti necessari, attendi..."
+if ! node tools/pacchetti-aggiornati.cjs; then
+  echo "Installo o aggiorno i pacchetti necessari, attendi..."
   if ! npm install; then
     rm -rf node_modules
     echo
