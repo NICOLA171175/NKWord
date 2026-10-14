@@ -1,5 +1,5 @@
 /**
- * Quali finestre di NKoffice sono aperte adesso. Serve a non proporre il
+ * Quali finestre di NKWord sono aperte adesso. Serve a non proporre il
  * recupero del documento di un'altra scheda ancora aperta: solo le copie
  * delle finestre chiuse (o andate in crash) sono da recuperare.
  */

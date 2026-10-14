@@ -261,7 +261,7 @@ export function correctWord(text: string, end: number, settings: AutoCorrectSett
   }
   // "parola - parola": il trattino isolato fra due parole diventa trattino medio.
   if (settings.replaceText && out === '-' && /\p{L}[.,;:!?]?\s+$/u.test(text.slice(0, start))) out = '–';
-  // Il testo appena sostituito resta come scritto nell'elenco (es. NKoffice).
+  // Il testo appena sostituito resta come scritto nell'elenco (es. NKWord).
   if (out === token) out = fixCaps(out, settings);
   if (settings.capitalizeSentences) out = capitalizeSentence(text, start, out);
   if (out === token) return null;

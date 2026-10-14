@@ -51,8 +51,8 @@ export function mountAutosave(host: AutosaveHost, module: AutosaveModule): () =>
     head.append(
       el('strong', '', 'Documenti recuperati'),
       el('span', '', items.length === 1
-        ? ' NKoffice si è chiuso prima che questo documento fosse salvato. Puoi riaprirlo da qui.'
-        : ' NKoffice si è chiuso prima che questi documenti fossero salvati. Puoi riaprirli da qui.'),
+        ? ' NKWord si è chiuso prima che questo documento fosse salvato. Puoi riaprirlo da qui.'
+        : ' NKWord si è chiuso prima che questi documenti fossero salvati. Puoi riaprirli da qui.'),
     );
     const close = el('button', 'autosave-close', '✕');
     close.title = 'Chiudi (le copie restano disponibili in File)';

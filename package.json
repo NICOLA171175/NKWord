@@ -2,6 +2,7 @@
   "name": "nikoffice",
   "version": "0.1.0",
   "description": "Clone di Microsoft Word in TypeScript",
+  "license": "MIT",
   "private": true,
   "engines": {
     "node": ">=22.12"

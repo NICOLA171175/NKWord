@@ -176,7 +176,7 @@ function imageSources(layout: DocumentLayout): Set<string> {
 }
 
 function info(writer: PdfWriter, meta: DocumentMetadata, now: Date): number {
-  const entries = [`/Producer ${pdfString('NKoffice')}`, `/Creator ${pdfString('NKoffice')}`, `/CreationDate ${pdfString(pdfDate(now))}`];
+  const entries = [`/Producer ${pdfString('NKWord')}`, `/Creator ${pdfString('NKWord')}`, `/CreationDate ${pdfString(pdfDate(now))}`];
   if (meta.title) entries.push(`/Title ${pdfString(meta.title)}`);
   if (meta.author) entries.push(`/Author ${pdfString(meta.author)}`);
   if (meta.subject) entries.push(`/Subject ${pdfString(meta.subject)}`);

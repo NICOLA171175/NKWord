@@ -1,6 +1,6 @@
 @echo off
-rem Avvia NKoffice con un doppio clic (Windows).
-title NKoffice
+rem Avvia NKWord con un doppio clic (Windows).
+title NKWord
 cd /d "%~dp0"
 
 where node >nul 2>nul
@@ -41,7 +41,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo Avvio di NKoffice: il browser si aprira' da solo.
+echo Avvio di NKWord: il browser si aprira' da solo.
 echo Per chiudere l'app chiudi questa finestra.
 echo.
 call npm run dev -- --open

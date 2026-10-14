@@ -233,7 +233,7 @@ export function createReadAloudModule(options: ReadAloudOptions = {}): ReadAloud
     if (!editor) return;
     message = null;
     if (!engine) {
-      message = 'Questo browser non sa leggere ad alta voce. Prova con Chrome o Edge, oppure con il programma NKoffice.';
+      message = 'Questo browser non sa leggere ad alta voce. Prova con Chrome o Edge, oppure con il programma NKWord.';
       notify();
       return;
     }

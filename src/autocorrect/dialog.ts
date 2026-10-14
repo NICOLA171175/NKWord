@@ -44,7 +44,7 @@ export function openAutoCorrectDialog(settings: AutoCorrectSettings): Promise<Au
     backdrop.append(dialog);
 
     const title = el('h2', '', 'Correzione automatica');
-    const intro = el('p', 'autocorrect-intro', 'Mentre scrivi, NKoffice corregge da solo questi errori. Per annullare una correzione premi Ctrl+Z subito dopo.');
+    const intro = el('p', 'autocorrect-intro', 'Mentre scrivi, NKWord corregge da solo questi errori. Per annullare una correzione premi Ctrl+Z subito dopo.');
 
     const checks = new Map<Flag, HTMLInputElement>();
     const flagsBox = el('div', 'autocorrect-flags');

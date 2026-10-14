@@ -104,7 +104,7 @@ export function createApp(root: HTMLElement, editor: Editor, options: AppOptions
   title.className = 'title-bar';
   const updateTitle = () => {
     const name = editor.state.doc.metadata.title || 'Documento1';
-    title.textContent = `${name} - NKoffice`;
+    title.textContent = `${name} - NKWord`;
     document.title = title.textContent;
   };
 

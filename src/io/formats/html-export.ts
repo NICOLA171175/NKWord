@@ -287,7 +287,7 @@ export function documentToHtml(doc: DocumentModel, options: HtmlExportOptions = 
   const meta = doc.metadata;
   const head = [
     '<meta charset="utf-8">',
-    '<meta name="generator" content="NKoffice">',
+    '<meta name="generator" content="NKWord">',
     `<title>${escapeText(meta.title ?? 'Documento')}</title>`,
     meta.author ? `<meta name="author" content="${escapeAttr(meta.author)}">` : '',
     meta.subject ? `<meta name="description" content="${escapeAttr(meta.subject)}">` : '',

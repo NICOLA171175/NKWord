@@ -1,9 +1,14 @@
-// Finestra desktop di NKoffice (Electron): carica l'app già compilata in app/
+// Finestra desktop di NKWord (Electron): carica l'app già compilata in app/
 // senza server né Node.js installato sul PC.
 const { app, BrowserWindow, Menu, ipcMain, session, shell } = require('electron');
 const { execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+
+// Il programma si chiamava NKoffice: i dati (documenti recenti, dizionario
+// personale, impostazioni, salvataggi automatici) restano nella cartella col
+// vecchio nome, così chi aggiorna non li perde.
+app.setPath('userData', path.join(app.getPath('appData'), 'NKoffice'));
 
 // Documenti che l'app sa aprire: solo questi si possono rileggere dai recenti.
 const ESTENSIONI_DOCUMENTI = new Set(['.docx', '.html', '.htm', '.txt', '.md', '.pdf']);
@@ -19,7 +24,7 @@ function creaFinestra() {
     width: 1280,
     height: 860,
     show: false,
-    title: 'NKoffice',
+    title: 'NKWord',
     icon: path.join(__dirname, 'build', 'icon.png'),
     webPreferences: {
       contextIsolation: true,
@@ -62,7 +67,7 @@ ipcMain.handle('nkoffice:leggi-file', async (_evento, percorso) => {
 // scrive nel campo con il focus (il documento). Il riconoscimento vocale
 // del browser non funziona in Electron (vedi src/dictation/engine.ts).
 const PREMI_WIN_H = [
-  '$k = Add-Type -Name Tasti -Namespace NKoffice -PassThru -MemberDefinition',
+  '$k = Add-Type -Name Tasti -Namespace NKWord -PassThru -MemberDefinition',
   "'[DllImport(\"user32.dll\")] public static extern void keybd_event(byte v, byte s, uint f, System.UIntPtr e);';",
   '$k::keybd_event(0x5B, 0, 0, [UIntPtr]::Zero);',
   '$k::keybd_event(0x48, 0, 0, [UIntPtr]::Zero);',

@@ -1,11 +1,12 @@
 {
   "name": "nikoffice",
-  "productName": "NKoffice",
+  "productName": "NKWord",
   "version": "0.1.0",
   "description": "Clone di Microsoft Word in TypeScript",
   "author": "Nicola",
+  "license": "MIT",
   "private": true,
-  "repository": "github:NICOLA171175/nikoffice",
+  "repository": "github:NICOLA171175/nkword",
   "main": "main.cjs",
   "scripts": {
     "app": "cd .. && npx vite build --base=./ --outDir desktop/app --emptyOutDir",
@@ -15,7 +16,7 @@
   },
   "build": {
     "appId": "it.nikoffice.app",
-    "productName": "NKoffice",
+    "productName": "NKWord",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -39,11 +40,11 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "NKoffice",
-      "artifactName": "NKoffice-installa.${ext}"
+      "shortcutName": "NKWord",
+      "artifactName": "NKWord-installa.${ext}"
     },
     "portable": {
-      "artifactName": "NKoffice-portable.${ext}"
+      "artifactName": "NKWord-portable.${ext}"
     },
     "mac": {
       "icon": "build/icon.png",
@@ -56,7 +57,7 @@
           ]
         }
       ],
-      "artifactName": "NKoffice-mac.${ext}"
+      "artifactName": "NKWord-mac.${ext}"
     }
   },
   "devDependencies": {

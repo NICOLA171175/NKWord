@@ -116,8 +116,8 @@ describe('regole', () => {
   });
 
   it('voci aggiunte e tolte dall’utente', () => {
-    const s = { ...DEFAULT_SETTINGS, custom: [{ from: 'nk', to: 'NKoffice' }], removed: ['(c)'] };
-    expect(word('Uso nk', s)).toBe('Uso NKoffice');
+    const s = { ...DEFAULT_SETTINGS, custom: [{ from: 'nk', to: 'NKWord' }], removed: ['(c)'] };
+    expect(word('Uso nk', s)).toBe('Uso NKWord');
     expect(word('Marchio (c)', s)).toBe('Marchio (c)');
   });
 
@@ -195,11 +195,11 @@ describe('mentre si scrive', () => {
   it('ricorda le opzioni', () => {
     const storage = new MapStorage();
     const module = createAutoCorrectModule({ storage });
-    module.setSettings({ ...DEFAULT_SETTINGS, smartQuotes: false, quoteStyle: 'angle', custom: [{ from: 'nk', to: 'NKoffice' }] });
+    module.setSettings({ ...DEFAULT_SETTINGS, smartQuotes: false, quoteStyle: 'angle', custom: [{ from: 'nk', to: 'NKWord' }] });
     const again = loadSettings(storage);
     expect(again.smartQuotes).toBe(false);
     expect(again.quoteStyle).toBe('angle');
-    expect(again.custom).toEqual([{ from: 'nk', to: 'NKoffice' }]);
+    expect(again.custom).toEqual([{ from: 'nk', to: 'NKWord' }]);
     storage.setItem('nkoffice-correzione-automatica', '{rotto');
     expect(loadSettings(storage)).toEqual(DEFAULT_SETTINGS);
   });
@@ -222,7 +222,7 @@ describe('finestra delle opzioni', () => {
     const to = dialog.querySelector<HTMLInputElement>('input[name="to"]')!;
     from.value = 'nk';
     from.dispatchEvent(new Event('input'));
-    to.value = 'NKoffice';
+    to.value = 'NKWord';
     to.dispatchEvent(new Event('input'));
     dialog.querySelector<HTMLButtonElement>('button[name="add"]')!.click();
     expect(dialog.querySelector('.autocorrect-row[data-from="nk"]')).toBeTruthy();
@@ -232,7 +232,7 @@ describe('finestra delle opzioni', () => {
     dialog.requestSubmit();
     const result = (await promise)!;
     expect(result.capitalizeSentences).toBe(false);
-    expect(result.custom).toEqual([{ from: 'nk', to: 'NKoffice' }]);
+    expect(result.custom).toEqual([{ from: 'nk', to: 'NKWord' }]);
     expect(result.removed).toEqual(['(c)']);
     expect(document.querySelector('.autocorrect-dialog')).toBeNull();
   });

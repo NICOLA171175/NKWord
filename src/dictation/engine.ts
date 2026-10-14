@@ -1,5 +1,5 @@
 /**
- * Come si detta, a seconda di dove gira NKoffice:
+ * Come si detta, a seconda di dove gira NKWord:
  * - `web`: nel browser Chrome o Edge, con il riconoscimento vocale del
  *   browser (Web Speech API). Serve Internet: l'audio viene riconosciuto
  *   dal servizio di Google (Chrome) o Microsoft (Edge), senza chiavi né account.

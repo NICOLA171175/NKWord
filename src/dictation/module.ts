@@ -160,7 +160,7 @@ export function createDictationModule(env: DictationEnvironment = detectEnvironm
         return;
       }
       setMessage({
-        text: `Questo browser non ha il riconoscimento vocale: apri NKoffice con Chrome o Edge.${env.windows ? ' Oppure premi Win+H per la dettatura di Windows.' : ''}`,
+        text: `Questo browser non ha il riconoscimento vocale: apri NKWord con Chrome o Edge.${env.windows ? ' Oppure premi Win+H per la dettatura di Windows.' : ''}`,
         kind: 'error',
       });
     },

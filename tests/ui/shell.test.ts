@@ -16,7 +16,7 @@ describe('shell', () => {
     expect(root.querySelector('.page')).not.toBeNull();
     expect(root.querySelector('.status-bar')!.textContent).toContain('0 parole');
     expect(document.activeElement).toBe(app.input.element);
-    expect(document.title).toBe('Documento1 - NKoffice');
+    expect(document.title).toBe('Documento1 - NKWord');
     app.destroy();
     expect(root.children).toHaveLength(0);
     expect(app.editor.commands.has('view.zoom')).toBe(false);
